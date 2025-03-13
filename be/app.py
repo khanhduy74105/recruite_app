@@ -1,10 +1,7 @@
-from flask import Flask, jsonify, request, session
-from pydantic import ValidationError
+from flask import Flask, jsonify, request
 from supabase import create_client, Client
 from dotenv import load_dotenv
 import os
-from models import UserRole
-import bcrypt
 
 # Load environment variables
 load_dotenv()
@@ -55,7 +52,7 @@ def sign_in():
 
             supabase.table('user_info').insert({
                 "user_id": user.data[0]['id'],
-                "role": UserRole.JOB_SEEKER,
+                "role": 'job_seeker',
                 "username": email.split('@')[0],
             }).execute()
             
