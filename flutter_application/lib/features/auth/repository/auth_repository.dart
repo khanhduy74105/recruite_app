@@ -48,11 +48,12 @@ class AuthRepository {
         if (response.isEmpty) {
           throw Exception('User not found');
         }
-        return UserModel.fromJson(authResponse.user!.toJson());
+        return UserModel.fromJson(response[0]);
       } else {
         return null;
       }
-    } catch (e) {
+    } catch (e, s) {
+      print(s);
       throw e.toString();
     }
   }

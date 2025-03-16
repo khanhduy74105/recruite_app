@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/app.dart';
 import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
 import 'package:flutter_application/features/auth/pages/signup_page.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
@@ -37,11 +38,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    print('LOGIN PAGE BUILD');
     return Scaffold(
         body: BlocConsumer<AuthCubit, AuthStates>(
       listener: (context, state) {
-        print('STATE: $state');
         if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -51,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
         } else if (state is AuthLoggedIn) {
           Navigator.pushAndRemoveUntil(
             context,
-            HomePage.route(),
+            AppBottomNavigatorBar.route(),
             (_) => false,
           );
         }

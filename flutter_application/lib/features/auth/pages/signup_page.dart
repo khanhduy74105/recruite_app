@@ -62,98 +62,113 @@ class _SignupPageState extends State<SignupPage> {
           );
         }
 
-        return Padding(
-          padding: const EdgeInsets.all(15.0),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Sign Up.",
-                  style: TextStyle(
-                    fontSize: 50,
-                    fontWeight: FontWeight.bold,
-                  ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight, // Ensures proper centering
                 ),
-                const SizedBox(height: 30),
-                
-                TextFormField(
-                  controller: emailController,
-                  decoration: const InputDecoration(
-                    hintText: 'Email',
-                  ),
-                  validator: (value) {
-                    if (value == null ||
-                        value.trim().isEmpty ||
-                        !value.trim().contains("@")) {
-                      return "Email field is invalid!";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: passwordController,
-                  decoration: const InputDecoration(
-                    hintText: 'Password',
-                  ),
-                  validator: (value) {
-                    if (value == null ||
-                        value.trim().isEmpty ||
-                        value.trim().length <= 6) {
-                      return "Password field is invalid!";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 15),
-                TextFormField(
-                  controller: confirmPasswordController,
-                  decoration: const InputDecoration(
-                    hintText: 'Confirm',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Confirm password field cannot be empty!";
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: signUpUser,
-                  child: const Text(
-                    'SIGN UP',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pushReplacement(LoginPage.route());
-                  },
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'Already have an account? ',
-                      style: Theme.of(context).textTheme.titleMedium,
-                      children: const [
-                        TextSpan(
-                          text: 'Sign In',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
+                child: Container(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Sign Up.",
+                            style: TextStyle(
+                              fontSize: 50,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 30),
+                          TextFormField(
+                            controller: emailController,
+                            decoration: const InputDecoration(
+                              hintText: 'Email',
+                            ),
+                            validator: (value) {
+                              if (value == null ||
+                                  value.trim().isEmpty ||
+                                  !value.trim().contains("@")) {
+                                return "Email field is invalid!";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          TextFormField(
+                            controller: passwordController,
+                            decoration: const InputDecoration(
+                              hintText: 'Password',
+                            ),
+                            validator: (value) {
+                              if (value == null ||
+                                  value.trim().isEmpty ||
+                                  value.trim().length <= 6) {
+                                return "Password field is invalid!";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          TextFormField(
+                            controller: confirmPasswordController,
+                            decoration: const InputDecoration(
+                              hintText: 'Confirm',
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return "Confirm password field cannot be empty!";
+                              }
+                              if (value != passwordController.text) {
+                                return "Passwords do not match!";
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: signUpUser,
+                            child: const Text(
+                              'SIGN UP',
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pushReplacement(
+                                LoginPage.route(),
+                              );
+                            },
+                            child: RichText(
+                              text: TextSpan(
+                                text: 'Already have an account? ',
+                                style: Theme.of(context).textTheme.titleMedium,
+                                children: const [
+                                  TextSpan(
+                                    text: 'Sign In',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                  )
+              ),
+            );
+          },
         );
       },
     ));

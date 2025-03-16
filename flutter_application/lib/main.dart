@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_application/app.dart';
 import 'package:flutter_application/core/constants/env.dart';
 import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
 import 'package:flutter_application/features/auth/pages/signup_page.dart';
@@ -96,8 +97,8 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       home: BlocBuilder<AuthCubit, AuthStates>(
         builder: (context, state) {
+          return const AppBottomNavigatorBar();
           if (state is AuthLoggedIn) {
-            return const HomePage();
           }
           return const SignupPage();
         },
