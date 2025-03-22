@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
+import 'package:flutter_application/features/network/pages/network_page.dart';
+import 'package:flutter_application/features/post/pages/post_page.dart';
 import 'package:flutter_application/features/profile/pages/profile.dart';
+import 'package:flutter_application/features/notifications/pages/notifications_page.dart';
+import 'package:flutter_application/features/jobs/pages/jobs_page.dart';
 
 class AppBottomNavigatorBar extends StatefulWidget {
   const AppBottomNavigatorBar({super.key});
@@ -20,15 +23,15 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
 
   final List<Widget> _screens = [
     const HomePage(),
-    const Center(child: Text("My Network", style: TextStyle(fontSize: 24))),
+    const MyNetworkPage(),
     const SizedBox(),
-    const Center(child: Text("Notifications", style: TextStyle(fontSize: 24))),
-    const Center(child: Text("Jobs", style: TextStyle(fontSize: 24))),
+    const NotificationsPage(),
+    const JobsPage(),
   ];
 
   void _onItemTapped(int index) {
     if (index == 2) {
-      _showPostModal();
+      showCreatePostScreen(context);
     } else {
       setState(() {
         _selectedIndex = index;
@@ -36,37 +39,13 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
     }
   }
 
-  void _showPostModal() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          height: 300,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("Create a Post",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Close"),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildDrawer() {
     return Drawer(
       child: Column(
         children: [
            UserAccountsDrawerHeader(
-            accountName: Text("Nguyen Van A"),
-            accountEmail: Text("nguyenvana@example.com"),
+            accountName: const Text("Nguyen Van A"),
+            accountEmail: const Text("nguyenvana@example.com"),
             currentAccountPicture: CircleAvatar(
               backgroundImage: Image.asset("assets/profile.png").image,
             ),

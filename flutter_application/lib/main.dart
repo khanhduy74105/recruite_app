@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_application/app.dart';
 import 'package:flutter_application/core/constants/env.dart';
+import 'package:flutter_application/core/constants/theme.dart';
 import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
 import 'package:flutter_application/features/auth/pages/signup_page.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
@@ -31,10 +32,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: linkedInTheme,
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
