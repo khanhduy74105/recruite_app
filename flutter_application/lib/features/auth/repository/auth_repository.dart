@@ -20,6 +20,7 @@ class AuthRepository {
       if (authResponse.user != null) {
           await supabase.from('user').insert(
           {
+            'id': authResponse.user!.id,
             'email': email,
             'full_name': email.split('@')[0],
           },
@@ -45,6 +46,7 @@ class AuthRepository {
 
       if (authResponse.user != null) {
         final response = await supabase.from('user').select().eq('email', email);
+        print(response);
         if (response.isEmpty) {
           throw Exception('User not found');
         }

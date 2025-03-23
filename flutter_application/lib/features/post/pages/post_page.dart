@@ -1,8 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application/core/constants/colors.dart';
+import 'package:flutter_application/core/services/supabase_service.dart';
 import 'package:flutter_application/core/ui/button.dart';
+import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
+import 'package:flutter_application/features/post/cubit/post_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
 
 void showCreatePostScreen(BuildContext context) {
   Navigator.of(context).push(
@@ -28,20 +36,23 @@ class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
 
   @override
-  _CreatePostScreenState createState() => _CreatePostScreenState();
+  CreatePostScreenState createState() => CreatePostScreenState();
 }
 
-class _CreatePostScreenState extends State<CreatePostScreen> {
-  final List<File> _selectedImages = []; // List to store selected images
+class CreatePostScreenState extends State<CreatePostScreen> {
+  final List<File> selectedImages = []; // List to store selected images
+  String content = '';
+  String visibility = 'public';
 
   // Function to pick images
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
-        _selectedImages.add(File(pickedFile.path));
+        selectedImages.add(File(pickedFile.path));
       });
     }
   }
@@ -49,120 +60,183 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   // Function to remove an image
   void _removeImage(int index) {
     setState(() {
-      _selectedImages.removeAt(index);
+      selectedImages.removeAt(index);
     });
+  }
+
+  void showModalChangeVisibility() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return FractionallySizedBox(
+          heightFactor: 0.3,
+          child: Column(
+            children: [
+              ListTile(
+                title: const Text("Public"),
+                onTap: () {
+                  setState(() {
+                    visibility = 'public';
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text("Connections"),
+                onTap: () {
+                  setState(() {
+                    visibility = 'connection';
+                  });
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        titleSpacing: 0,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Row(
-          children: [
-            CircleAvatar(
-              backgroundImage: AssetImage("assets/profile.png"),
-            ),
-            InkWell(
-              child: Row(
-                children: [
-                  Text("Bất cứ ai",
-                      style: TextStyle(color: Colors.black, fontSize: 16)),
-                  Icon(Icons.arrow_drop_down, color: Colors.black),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: CustomTextButton(
-              text: "Đăng",
-              activeColor: AppColors.primary,
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
+    return BlocListener<PostCubit, PostState>(
+      listener: (context, state) {
+        if (state is PostSuccess) {
+          setState(() {
+            content = '';
+            selectedImages.clear();
+            visibility = 'public';
+          });
+          Navigator.pop(context); // Close the screen after success
+        }
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          titleSpacing: 0,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.close, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
           ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: TextField(
-                maxLines: null,
-                autofocus: true,
-                style: const TextStyle(fontSize: 16),
-                keyboardType: TextInputType.multiline,
-                decoration: const InputDecoration(
-                  hintText: 'Bạn muốn nói về chủ đề gì?',
-                  hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
-                  border: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
+          title: Row(
+            children: [
+              const CircleAvatar(
+                backgroundImage: AssetImage("assets/profile.png"),
+              ),
+              InkWell(
+                onTap: () {
+                  showModalChangeVisibility();
+                },
+                child: Row(
+                  children: [
+                    Text(visibility,
+                        style: TextStyle(color: Colors.black, fontSize: 16)),
+                    Icon(Icons.arrow_drop_down, color: Colors.black),
+                  ],
                 ),
               ),
-            ),
-            if (_selectedImages.isNotEmpty)
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                itemCount: _selectedImages.length,
-                itemBuilder: (context, index) {
-                  return Stack(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          image: DecorationImage(
-                            image: FileImage(_selectedImages[index]),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: () => _removeImage(index),
-                          child: const CircleAvatar(
-                            radius: 12,
-                            backgroundColor: Colors.black54,
-                            child: Icon(Icons.close, size: 16, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
+            ],
+          ),
+          actions: [
+            BlocBuilder<AuthCubit, AuthStates>(builder: (context, state) {
+              return Padding(
+              padding: const EdgeInsets.only(right: 10),
+              child: CustomTextButton(
+                text: "Đăng",
+                activeColor: AppColors.primary,
+                textColor: Colors.white,
+                onPressed: () async {
+                  if (state is AuthLoggedIn) {
+                    context.read<PostCubit>().createPost(
+                        state.user.id,
+                        content,
+                        selectedImages,
+                        visibility);
+                  }
                 },
               ),
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.image, size: 28, color: Colors.grey),
-                  onPressed: _pickImage,
-                ),
-                _buildActionButton(Icons.calendar_today),
-                _buildActionButton(Icons.more_horiz),
-              ],
-            ),
+            );
+            }),
           ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextField(
+                  maxLines: null,
+                  autofocus: true,
+                  keyboardType: TextInputType.multiline,
+                  decoration: const InputDecoration(
+                    hintText: 'Bạn muốn nói về chủ đề gì?',
+                    hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
+                    border: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      content = value;
+                    });
+                  },
+                ),
+              ),
+              if (selectedImages.isNotEmpty)
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  itemCount: selectedImages.length,
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: FileImage(selectedImages[index]),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: GestureDetector(
+                            onTap: () => _removeImage(index),
+                            child: const CircleAvatar(
+                              radius: 12,
+                              backgroundColor: Colors.black54,
+                              child: Icon(Icons.close,
+                                  size: 16, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.image, size: 28, color: Colors.grey),
+                    onPressed: _pickImage,
+                  ),
+                  _buildActionButton(Icons.calendar_today),
+                  _buildActionButton(Icons.more_horiz),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

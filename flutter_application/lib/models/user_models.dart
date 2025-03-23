@@ -24,8 +24,8 @@ String userRoleToString(UserRole role) {
   }
 }
 class UserModel {
-  final int id;
-  final int? resume;
+  final String id;
+  final String? resume;
   final String email;
   final DateTime? createdAt;
   final String? phone;
