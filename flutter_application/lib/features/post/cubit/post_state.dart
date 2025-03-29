@@ -14,7 +14,7 @@ class PostLoading extends PostState {}
 class PostSuccess extends PostState {}
 
 class PostLoaded extends PostState {
-  final List<Map<String, dynamic>> posts;
+  final List<PostModel> posts;
 
   const PostLoaded(this.posts);
 

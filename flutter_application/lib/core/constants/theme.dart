@@ -24,12 +24,10 @@ final ThemeData linkedInTheme = ThemeData(
   colorScheme: ColorScheme.light(
     primary: const Color(0xFF0077B5),
     secondary: Colors.grey[600]!,
-    background: Colors.white,
     surface: Colors.white,
     error: Colors.redAccent,
     onPrimary: Colors.white,
     onSecondary: Colors.white,
-    onBackground: Colors.black,
     onSurface: Colors.black,
   ),
 

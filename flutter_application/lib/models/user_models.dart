@@ -1,4 +1,4 @@
-enum UserRole { admin, user, guest }
+enum UserRole { admin, user, recruiter }
 
 UserRole userRoleFromString(String role) {
   switch (role) {
@@ -6,8 +6,8 @@ UserRole userRoleFromString(String role) {
       return UserRole.admin;
     case 'user':
       return UserRole.user;
-    case 'guest':
-      return UserRole.guest;
+    case 'recruiter':
+      return UserRole.recruiter;
     default:
       throw Exception('Unknown user role: $role');
   }
@@ -19,8 +19,8 @@ String userRoleToString(UserRole role) {
       return 'admin';
     case UserRole.user:
       return 'user';
-    case UserRole.guest:
-      return 'guest';
+    case UserRole.recruiter:
+      return 'recruiter';
   }
 }
 class UserModel {
@@ -34,7 +34,7 @@ class UserModel {
   final String? headline;
   final String? location;
   final String? avatarUrl;
-  final String? fullName;
+  final String fullName;
 
   UserModel({
     required this.id,
@@ -47,7 +47,7 @@ class UserModel {
     this.headline,
     this.location,
     this.avatarUrl,
-    this.fullName,
+    required this.fullName,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {

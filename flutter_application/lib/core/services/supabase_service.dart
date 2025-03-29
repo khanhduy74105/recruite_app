@@ -15,19 +15,32 @@ class SupabaseService {
     try {
       List<String> urls = [];
       for (File file in files) {
-        String fileName = file.path.split('/').last;
+        String fileExtension = file.path.split('.').last;
+        String fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_${file.hashCode}.$fileExtension';
         Uint8List fileBytes = await file.readAsBytes();
         await Supabase.instance.client.storage.from(bucketName).uploadBinary(
               fileName,
               fileBytes,
-              fileOptions: const FileOptions(contentType: 'image/png'),
+              fileOptions: FileOptions(contentType: 'image/$fileExtension'),
             );
         urls.add(fileName);
       }
       return urls;
     } catch (e) {
-      print(e);
+      print('Error uploading files: $e');
       return [];
+    }
+  }
+
+  static String getUrl(String fileName) {
+    try {
+      final String url = Supabase.instance.client.storage
+          .from(bucketName)
+          .getPublicUrl(fileName);
+      return url;
+    } catch (e) {
+      return '';
     }
   }
 }

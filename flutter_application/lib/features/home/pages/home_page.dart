@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/features/home/cubit/home_cubit.dart';
+import 'package:flutter_application/features/home/widgets/post_card_widget.dart';
+import 'package:flutter_application/models/post_model.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -8,80 +12,39 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+
+  @override
+  void initState() {
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ListView(
-        children: [
-          // Post 1
-          ListTile(
-            leading: CircleAvatar(
-              backgroundImage: AssetImage("assets/profile.png"),
-            ),
-            title: const Text("Hưng Huỳnh"),
-            subtitle: const Text("Recruiter · 15 giờ"),
-            trailing: IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {},
-            ),
+      body: Container(
+        child: SingleChildScrollView(
+          child: BlocBuilder<HomeCubit, HomeState>(
+            builder: (context, state) {
+              if (state is HomeLoadingPost) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is HomeError) {
+                return Center(child: Text(state.error));
+              }
+              if (state is HomeLoadedPost) {
+                return ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: 1,
+                  itemBuilder: (context, index) {
+                    PostModel postModel = state.posts[index];
+                    return PostCardWidget(postModel: postModel);
+                  },
+                );
+              }
+              return const Center(child: Text("No posts available"));
+            },
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: const Text(
-              "Dù đóng vai 🤡 theo kịch bản của Rap Việt mùa 1, nhưng có 1 câu của Wowy làm mình ấn tượng đến giờ:",
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.thumb_up_alt_outlined),
-                label: const Text("Thích"),
-              ),
-              TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.comment_outlined),
-                label: const Text("Bình luận"),
-              ),
-              TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.share_outlined),
-                label: const Text("Đăng lại"),
-              ),
-              TextButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.send_outlined),
-                label: const Text("Gửi"),
-              ),
-            ],
-          ),
-          const Divider(),
-
-          // Advertisement
-          ListTile(
-            leading: CircleAvatar(
-              backgroundImage: AssetImage("assets/profile.png"),
-            ),
-            title: const Text("Supersonic from Unity"),
-            subtitle: const Text("Được quảng bá"),
-            trailing: TextButton(
-              onPressed: () {},
-              child: const Text("+ Theo dõi"),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: const Text(
-              "Trying to navigate the AI landscape as you build out your hybrid? Supersonic's Giacomo Maragliulo...",
-            ),
-          ),
-          const SizedBox(height: 10),
-          Image.asset("assets/profile.png"),
-          const Divider(),
-        ],
-      ),
+        ),
+      )
     );
   }
 }
