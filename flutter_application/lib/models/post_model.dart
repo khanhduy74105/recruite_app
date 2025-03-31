@@ -65,4 +65,30 @@ class PostModel {
   set setVisibility(String newVisibility) => visibility = newVisibility;
   set setJob(JobModel? newJob) => job = newJob;
   set setCreator(UserModel? newCreator) => creator = newCreator;
+
+  PostModel copyWith({
+    String? id,
+    String? creatorId,
+    String? content,
+    List<String>? imageLinks,
+    DateTime? createdAt,
+    List<String>? likes,
+    List<String>? comments,
+    String? visibility,
+    JobModel? job,
+    UserModel? creator,
+  }) {
+    return PostModel(
+      id: id ?? this.id,
+      creatorId: creatorId ?? this.creatorId,
+      content: content ?? this.content,
+      imageLinks: imageLinks ?? this.imageLinks,
+      createdAt: createdAt ?? this.createdAt,
+      likes: likes ?? this.likes,
+      comments: comments ?? this.comments,
+      visibility: visibility ?? this.visibility,
+      job: job ?? this.job,
+      creator: creator ?? this.creator,
+    );
+  }
 }

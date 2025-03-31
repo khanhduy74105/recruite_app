@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-void showModalChangeVisibility(context, List<Widget> children) {
+void showModalWrapper(context, List<Widget> children) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

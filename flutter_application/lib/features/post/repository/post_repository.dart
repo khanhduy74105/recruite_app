@@ -8,6 +8,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class PostRepository {
   final SupabaseClient supabase = Supabase.instance.client;
 
+  PostRepository._privateConstructor();
+  static final PostRepository _instance = PostRepository._privateConstructor();
+  factory PostRepository() {
+    return _instance;
+  }
+
   Future<bool> createPost({
     required String creatorId,
     required String content,
@@ -27,6 +33,31 @@ class PostRepository {
         'created_at': DateTime.now().toIso8601String(),
       });
 
+      return true;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<bool> editPost(PostModel post) async {
+    try {
+      await supabase.from('post').update({
+        'content': post.content,
+        'visibility': post.visibility,
+        'image_links': jsonEncode(post.imageLinks),
+        'job': post.job?.id,
+        'likes': jsonEncode(post.likes),
+      }).eq('id', post.id);
+
+      return true;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<bool> deletePost(String postId) async {
+    try {
+      await supabase.from('post').delete().eq('id', postId);
       return true;
     } catch (e) {
       throw e.toString();

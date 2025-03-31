@@ -20,29 +20,27 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        child: SingleChildScrollView(
-          child: BlocBuilder<HomeCubit, HomeState>(
-            builder: (context, state) {
-              if (state is HomeLoadingPost) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (state is HomeError) {
-                return Center(child: Text(state.error));
-              }
-              if (state is HomeLoadedPost) {
-                return ListView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  shrinkWrap: true,
-                  itemCount: 1,
-                  itemBuilder: (context, index) {
-                    PostModel postModel = state.posts[index];
-                    return PostCardWidget(postModel: postModel);
-                  },
-                );
-              }
-              return const Center(child: Text("No posts available"));
-            },
-          ),
+      body: SingleChildScrollView(
+        child: BlocBuilder<HomeCubit, HomeState>(
+          builder: (context, state) {
+            if (state is HomeLoadingPost) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is HomeError) {
+              return Center(child: Text(state.error));
+            }
+            if (state is HomeLoadedPost) {
+              return ListView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
+                itemCount: state.posts.length,
+                itemBuilder: (context, index) {
+                  PostModel postModel = state.posts[index];
+                  return PostCardWidget(postModel: postModel);
+                },
+              );
+            }
+            return const Center(child: Text("No posts available"));
+          },
         ),
       )
     );

@@ -5,7 +5,7 @@ final ThemeData linkedInTheme = ThemeData(
   brightness: Brightness.light, // Light theme as default
 
   // Primary color (LinkedIn blue)
-  primaryColor: const Color(0xFF0077B5),
+  primaryColor: Colors.blue,
 
   // AppBar theme
   appBarTheme: const AppBarTheme(
@@ -22,7 +22,7 @@ final ThemeData linkedInTheme = ThemeData(
 
   // Color Scheme
   colorScheme: ColorScheme.light(
-    primary: const Color(0xFF0077B5),
+    primary:  Colors.blue,
     secondary: Colors.grey[600]!,
     surface: Colors.white,
     error: Colors.redAccent,
@@ -37,13 +37,13 @@ final ThemeData linkedInTheme = ThemeData(
     titleLarge: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
     bodyLarge: const TextStyle(fontSize: 16, color: Colors.black),
     bodyMedium: TextStyle(fontSize: 14, color: Colors.grey[800]),
-    labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0077B5)),
+    labelLarge: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue),
   ),
 
   // Button Theme
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF0077B5),
+      backgroundColor:  Colors.blue,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -53,8 +53,8 @@ final ThemeData linkedInTheme = ThemeData(
 
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
-      foregroundColor: const Color(0xFF0077B5),
-      side: const BorderSide(color: Color(0xFF0077B5)),
+      foregroundColor:  Colors.blue,
+      side: const BorderSide(color: Colors.blue),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -72,7 +72,7 @@ final ThemeData linkedInTheme = ThemeData(
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: Color(0xFF0077B5), width: 2),
+      borderSide: const BorderSide(color: Colors.blue, width: 2),
     ),
   ),
 
@@ -100,7 +100,7 @@ final ThemeData linkedInTheme = ThemeData(
   // Bottom Navigation Bar
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
     backgroundColor: Colors.white,
-    selectedItemColor: const Color(0xFF0077B5),
+    selectedItemColor:  Colors.blue,
     unselectedItemColor: Colors.grey[600],
     showUnselectedLabels: true,
   ),

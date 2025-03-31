@@ -17,4 +17,23 @@ class HomeCubit extends Cubit<HomeState> {
       emit(HomeError(e.toString()));
     }
   }
+
+  void updatePost(PostModel updatedPost) {
+    final currentState = state;
+    if (currentState is HomeLoadedPost) {
+      final updatedPosts = currentState.posts.map((post) {
+        return post.id == updatedPost.id ? updatedPost : post;
+      }).toList();
+
+      emit(HomeLoadedPost(updatedPosts));
+    }
+  }
+
+  void deletePost(String postId) {
+    final currentState = state;
+    if (currentState is HomeLoadedPost) {
+      final updatedPosts = currentState.posts.where((post) => post.id != postId).toList();
+      emit(HomeLoadedPost(updatedPosts));
+    }
+  }
 }

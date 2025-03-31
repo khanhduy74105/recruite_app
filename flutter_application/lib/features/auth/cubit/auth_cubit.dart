@@ -10,6 +10,10 @@ class AuthCubit extends Cubit<AuthStates> {
   final authRepository = AuthRepository();
   static AuthCubit get(context) => BlocProvider.of(context);
   void checkCurrentUser() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      emit(AuthInitial());
+      return;
+    }
     final response = await Supabase.instance.client
         .from('user')
         .select()
@@ -28,6 +32,13 @@ class AuthCubit extends Cubit<AuthStates> {
   }) async {
     try {
       emit(AuthLoading());
+
+      if (
+        Supabase.instance.client.auth.currentUser != null
+      ) {
+        await Supabase.instance.client.auth.signOut();
+      }
+      
       await authRepository.signUp(
         email: email,
         password: password,

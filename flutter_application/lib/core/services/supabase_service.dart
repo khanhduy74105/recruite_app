@@ -43,4 +43,13 @@ class SupabaseService {
       return '';
     }
   }
+
+  static String getCurrentUserId() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      return user.id;
+    } else {
+      throw Exception('User not logged in');
+    }
+  }
 }

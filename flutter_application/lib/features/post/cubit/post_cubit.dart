@@ -14,7 +14,8 @@ class PostCubit extends Cubit<PostState> {
   final PostRepository postRepository = PostRepository();
   final JobRepository jobRepository = JobRepository();
 
-  Future<void> createPost(String creatorId, String content, List<File> imageLinks, String visibility, JobModel? job) async {
+  Future<void> createPost(String creatorId, String content,
+      List<File> imageLinks, String visibility, JobModel? job) async {
     emit(PostLoading());
     try {
       JobModel? insertedJob;
@@ -22,12 +23,11 @@ class PostCubit extends Cubit<PostState> {
         insertedJob = await jobRepository.createJob(job);
       }
       final success = await postRepository.createPost(
-        creatorId: creatorId,
-        content: content,
-        imageLinks: imageLinks,
-        visibility: visibility,
-        jobId: insertedJob?.id
-      );
+          creatorId: creatorId,
+          content: content,
+          imageLinks: imageLinks,
+          visibility: visibility,
+          jobId: insertedJob?.id);
       if (success) {
         emit(PostSuccess());
       } else {
@@ -43,6 +43,34 @@ class PostCubit extends Cubit<PostState> {
     try {
       final posts = await postRepository.fetchPosts();
       emit(PostLoaded(posts));
+    } catch (e) {
+      emit(PostFailure(e.toString()));
+    }
+  }
+
+  Future<void> editPost(PostModel post) async {
+    emit(PostLoading());
+    try {
+      final success = await postRepository.editPost(post);
+      if (success) {
+        emit(PostSuccess());
+      } else {
+        emit(PostFailure('Failed to edit post'));
+      }
+    } catch (e) {
+      emit(PostFailure(e.toString()));
+    }
+  }
+
+  Future<void> deletePost(String postId) async {
+    emit(PostLoading());
+    try {
+      final success = await postRepository.deletePost(postId);
+      if (success) {
+        emit(PostSuccess());
+      } else {
+        emit(PostFailure('Failed to delete post'));
+      }
     } catch (e) {
       emit(PostFailure(e.toString()));
     }

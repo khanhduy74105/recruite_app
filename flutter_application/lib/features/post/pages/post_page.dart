@@ -48,7 +48,7 @@ class VisibilitySelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        showModalChangeVisibility(context, [
+        showModalWrapper(context, [
           ListTile(
             title: const Text("Public"),
             onTap: () {

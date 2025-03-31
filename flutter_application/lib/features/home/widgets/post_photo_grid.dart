@@ -9,9 +9,7 @@ class PhotoGrid extends StatefulWidget {
   final List<String> imageUrls;
 
   const PhotoGrid(
-      {super.key,
-      required this.maxImages,
-      required this.imageUrls});
+      {super.key, required this.maxImages, required this.imageUrls});
 
   @override
   createState() => _PhotoGridState();
@@ -22,25 +20,25 @@ class _PhotoGridState extends State<PhotoGrid> {
   Widget build(BuildContext context) {
     var images = buildImages();
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.width,
-      width: MediaQuery.of(context).size.width,
-      child: MasonryGridView.count(
-        crossAxisCount: getCrossAxisCount(widget.imageUrls.length),
-        mainAxisSpacing: 2,
-        crossAxisSpacing: 2,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: EdgeInsets.zero,
-        
-        itemCount: images.length,
-        itemBuilder: (context, index) => ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: AspectRatio(
-            aspectRatio: 1,
-            child: images[index],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return MasonryGridView.count(
+          crossAxisCount: getCrossAxisCount(widget.imageUrls.length),
+          mainAxisSpacing: 2,
+          crossAxisSpacing: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          itemCount: images.length,
+          itemBuilder: (context, index) => ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: images[index],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -64,26 +62,26 @@ class _PhotoGridState extends State<PhotoGrid> {
               fit: BoxFit.cover,
             ),
             onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PhotoViewerPage(
-                imageUrls: widget.imageUrls,
-                initialIndex: index,
+              context,
+              MaterialPageRoute(
+                builder: (context) => PhotoViewerPage(
+                  imageUrls: widget.imageUrls,
+                  initialIndex: index,
+                ),
               ),
             ),
-          ),
           );
         } else {
           return GestureDetector(
             onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PhotoViewerPage(
-                imageUrls: widget.imageUrls,
-                initialIndex: index,
+              context,
+              MaterialPageRoute(
+                builder: (context) => PhotoViewerPage(
+                  imageUrls: widget.imageUrls,
+                  initialIndex: index,
+                ),
               ),
             ),
-          ),
             child: Stack(
               fit: StackFit.expand,
               children: [
