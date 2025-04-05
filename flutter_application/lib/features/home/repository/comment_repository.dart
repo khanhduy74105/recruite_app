@@ -22,12 +22,8 @@ class CommentRepository {
         'mention_user_id': comment.mentionUser?.id,
       }).select('''
       *,
-      user: user!post_comment_user_fkey (
-        *
-      ),
-      mention_user: user!post_comment_mention_user_id_fkey (
-        *
-      )
+        user:user_id(*),
+        mention_user:mention_user_id(*)
       ''');
 
       if (inserted.isEmpty) {
@@ -42,20 +38,51 @@ class CommentRepository {
     }
   }
 
+  Future<CommentModel> editComment(CommentModel comment) async {
+    try {
+      final updated = await supabase
+          .from(modelName)
+          .update({
+            'content': comment.content,
+            'image_urls': jsonEncode(comment.imageUrls),
+            'mention_user_id': comment.mentionUser?.id,
+            'likes': jsonEncode(comment.likes),
+          })
+          .eq('id', comment.id)
+          .select('''
+            *,
+            user:user_id(*),
+            mention_user:mention_user_id(*)
+          ''');
+
+      if (updated.isEmpty) {
+        throw Exception('Failed to update comment');
+      }
+      CommentModel updatedComment = CommentModel.fromJson(updated[0]);
+
+      return updatedComment;
+    } catch (e, s) {
+      print('Error updating comment: $e\n$s');
+      throw e.toString();
+    }
+  }
+
   Future<List<CommentModel>> fetchComments(String postId) async {
     try {
       final response = await supabase
           .from(modelName)
           .select('''
-        *,
-        user: user!post_comment_user_fkey (
-          *
-        ),
-        mention_user: user!post_comment_mention_user_id_fkey (
-          *
-        )
-      ''')
+            *,
+            user:user_id(*),
+            mention_user:mention_user_id(*),
+            replies:post_comment!parent_comment_id(
+              *,
+              user:user_id(*),
+              mention_user:mention_user_id(*)
+            )
+          ''')
           .eq('post_id', postId)
+          .filter('parent_comment_id', 'is', 'null')
           .order('created_at', ascending: false);
 
       if (response.isEmpty) {
@@ -82,5 +109,4 @@ class CommentRepository {
       throw e.toString();
     }
   }
-
 }

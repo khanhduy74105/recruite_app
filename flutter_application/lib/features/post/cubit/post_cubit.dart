@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter_application/core/services/supabase_service.dart';
 import 'package:flutter_application/features/post/repository/job_repository.dart';
 import 'package:flutter_application/models/job_model.dart';
 import 'package:flutter_application/models/post_model.dart';
@@ -22,10 +23,11 @@ class PostCubit extends Cubit<PostState> {
       if (job != null) {
         insertedJob = await jobRepository.createJob(job);
       }
+      List<String> urls = await SupabaseService.upload(imageLinks);
       final success = await postRepository.createPost(
           creatorId: creatorId,
           content: content,
-          imageLinks: imageLinks,
+          imageLinks: urls,
           visibility: visibility,
           jobId: insertedJob?.id);
       if (success) {
@@ -48,10 +50,10 @@ class PostCubit extends Cubit<PostState> {
     }
   }
 
-  Future<void> editPost(PostModel post) async {
+  Future<void> editPost(PostModel post, List<String> newImageLinks, List<File> imageLinks, JobModel? newJob) async {
     emit(PostLoading());
     try {
-      final success = await postRepository.editPost(post);
+      final success = await postRepository.editPost(post, newImageLinks, imageLinks, newJob);
       if (success) {
         emit(PostSuccess());
       } else {

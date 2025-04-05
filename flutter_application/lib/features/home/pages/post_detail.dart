@@ -41,12 +41,14 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   void _fetchComments() async {
     isLoading = true;
-    setState(() {});
+    setState(() {
+      mentionUser = null;
+      replyComment = null;
+    });
     commentRepository.fetchComments(widget.postModel.id).then(
       (value) {
         comments = value;
         isLoading = false;
-        print('Fetched comments: ${comments?.length}');
         setState(() {});
       },
     ).catchError((error) {
@@ -69,6 +71,28 @@ class _PostDetailPageState extends State<PostDetailPage> {
     setState(() {
       selectedImages.removeAt(index);
     });
+  }
+
+  void editComment(CommentModel comment, {bool isRemove = false}) {
+    setState(() {
+      comments = comments?.map((c) {
+        return c.id == comment.id ? isRemove == true ? null : comment : c;
+      }).toList().where((c) => c != null).cast<CommentModel>().toList();
+    });
+  }
+
+  void onReplyComment(CommentModel comment) {
+    if (comment.parentCommentId != null) {
+      setState(() {
+        replyComment = comment.parentCommentId;
+        mentionUser = comment.mentionUser;
+      });
+    } else {
+      setState(() {
+        replyComment = comment.id;
+        mentionUser = comment.creator;
+      });
+    }
   }
 
   @override
@@ -94,6 +118,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     ),
                     PostComment(
                       comments: comments ?? [],
+                      onEditComment: editComment,
+                      onReplyComment: onReplyComment,
                     ),
                   ],
                 )),
@@ -182,6 +208,32 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                   horizontal: 12.0,
                                   vertical: 0.0,
                                 ),
+                                prefixIcon: mentionUser != null
+                                    ? Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            SizedBox(width: 8),
+                                            Text(
+                                              '@${mentionUser?.fullName}',
+                                              style: const TextStyle(
+                                                color: Colors.blue,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 2),
+                                            GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    mentionUser = null;
+                                                  });
+                                                },
+                                                child: const Icon(
+                                                  Icons.close,
+                                                  size: 20,
+                                                )),
+                                          ],
+                                        )
+                                    : null,
                               ),
                             ),
                           ),
@@ -221,8 +273,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                     content: content,
                                     imageUrls: imageUrls,
                                     parentCommentId: replyComment,
-                                    likes: 0,
                                   );
+
+                                  comment.mentionUser = mentionUser;
+                                  comment.parentCommentId = replyComment;
 
                                   CommentModel inserted =
                                       await commentRepository.createComment(

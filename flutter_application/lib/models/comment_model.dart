@@ -3,15 +3,16 @@ import 'user_models.dart';
 import 'dart:convert';
 
 class CommentModel {
-  final String id;
-  final String postId;
-  final UserModel creator;
-  final String content;
-  final String? parentCommentId;
-  final List<String> imageUrls;
-  final UserModel? mentionUser;
-  final DateTime? createdAt;
-  final int likes;
+  String id;
+  String postId;
+  UserModel creator;
+  String content;
+  String? parentCommentId;
+  List<String> imageUrls;
+  UserModel? mentionUser;
+  DateTime? createdAt;
+  List<String> likes;
+  List<CommentModel> replies;
 
   CommentModel({
     required this.id,
@@ -21,9 +22,22 @@ class CommentModel {
     this.parentCommentId,
     this.imageUrls = const [],
     this.mentionUser,
-    required this.likes,
+    this.likes = const [],
+    this.replies = const [],
     this.createdAt,
   });
+
+  // Setters
+  set setId(String value) => id = value;
+  set setPostId(String value) => postId = value;
+  set setCreator(UserModel value) => creator = value;
+  set setContent(String value) => content = value;
+  set setParentCommentId(String? value) => parentCommentId = value;
+  set setImageUrls(List<String> value) => imageUrls = value;
+  set setMentionUser(UserModel? value) => mentionUser = value;
+  set setCreatedAt(DateTime? value) => createdAt = value;
+  set setLikes(List<String> value) => likes = value;
+  set setReplies(List<CommentModel> value) => replies = value;
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
     return CommentModel(
@@ -38,7 +52,10 @@ class CommentModel {
       imageUrls:
           (jsonDecode(json['image_urls']) as List<dynamic>).cast<String>(),
       createdAt: DateTime.parse(json['created_at'] as String),
-      likes: json['likes'] as int? ?? 0,
+      likes: (jsonDecode(json['likes']) as List<dynamic>).cast<String>(),
+      replies: (json['replies'] as List<dynamic>? ?? [])
+          .map((e) => CommentModel.fromJson(e as Map<String, dynamic>))
+          .toList()
     );
   }
 
@@ -54,7 +71,8 @@ class CommentModel {
       'mention_user': mentionUser?.toJson(),
       'mention_user_id': mentionUser?.toJson()['id'],
       'created_at': createdAt?.toIso8601String(),
-      'likes': likes,
+      'likes': jsonEncode(likes),
+      'replies': replies?.map((e) => e.toJson()).toList(),
     };
   }
 }
