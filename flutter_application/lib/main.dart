@@ -8,6 +8,7 @@ import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
 import 'package:flutter_application/features/auth/pages/signup_page.dart';
 import 'package:flutter_application/features/home/cubit/home_cubit.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
+import 'package:flutter_application/features/network/cubit/network_cubit.dart';
 import 'package:flutter_application/features/post/cubit/post_cubit.dart';
 import 'package:flutter_application/models/user_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,6 +21,7 @@ Future<void> main() async {
       providers: [
         BlocProvider(create: (_) => AuthCubit()..checkCurrentUser()),
         BlocProvider(create: (_) => PostCubit()),
+        BlocProvider(create: (_) => NetworkCubit()..getUsers()),
         BlocProvider(create: (_) => HomeCubit()..getPosts()),
       ],
       child: const MyApp(),

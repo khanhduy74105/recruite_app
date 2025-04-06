@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
 import 'package:flutter_application/features/network/pages/network_page.dart';
 import 'package:flutter_application/features/post/pages/post_page.dart';
 import 'package:flutter_application/features/profile/pages/profile.dart';
 import 'package:flutter_application/features/notifications/pages/notifications_page.dart';
 import 'package:flutter_application/features/jobs/pages/jobs_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppBottomNavigatorBar extends StatefulWidget {
   const AppBottomNavigatorBar({super.key});
@@ -72,6 +75,7 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
             leading: const Icon(Icons.logout),
             title: const Text("Logout"),
             onTap: () {
+              context.read<AuthCubit>().logout();
               Navigator.pop(context);
             },
           ),

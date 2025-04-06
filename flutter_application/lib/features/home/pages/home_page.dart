@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/features/home/cubit/home_cubit.dart';
 import 'package:flutter_application/features/home/widgets/post_card_widget.dart';
+import 'package:flutter_application/features/network/repository/network_repository.dart';
 import 'package:flutter_application/models/post_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
