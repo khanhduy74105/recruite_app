@@ -1,25 +1,31 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter_application/models/user_models.dart';
+
 class JobModel {
   String id;
   String title;
+  String creator;
   String description;
   List<String> jdUrls;
   List<File>? files;
   String companyName;
   String location;
   DateTime createdAt;
+  UserModel? userModel;
 
   JobModel({
     required this.id,
     required this.title,
+    required this.creator,
     required this.description,
     required this.jdUrls,
     required this.files,
     required this.companyName,
     required this.location,
     required this.createdAt,
+    this.userModel,
   });
 
   // Setters
@@ -41,7 +47,9 @@ class JobModel {
       files: null,
       companyName: json['company_name'] as String,
       location: json['location'] as String,
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: DateTime.parse(json['created_at']), 
+      creator: json['creator'] as String,
+      userModel: UserModel.fromJson(json['user'] ?? {} as Map<String, dynamic>),
     );
   }
 

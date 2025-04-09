@@ -99,7 +99,10 @@ class PostRepository {
               *
             ),
             job: job!post_job_fkey ( 
-              *
+              *,
+              user: creator(
+                *
+              )
             )
           ''')
           .order('created_at', ascending: false);
