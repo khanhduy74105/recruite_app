@@ -71,4 +71,14 @@ class AuthCubit extends Cubit<AuthStates> {
       emit(AuthError(e.toString()));
     }
   }
+
+  void logout() async {
+    try {
+      emit(AuthLoading());
+      await Supabase.instance.client.auth.signOut();
+      emit(AuthInitial());
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
 }

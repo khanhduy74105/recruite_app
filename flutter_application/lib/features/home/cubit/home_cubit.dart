@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:bloc/bloc.dart';
 import 'package:flutter_application/features/post/repository/post_repository.dart';
+import 'package:flutter_application/models/job_model.dart';
 import 'package:flutter_application/models/post_model.dart';
 import 'package:meta/meta.dart';
 
@@ -18,8 +21,9 @@ class HomeCubit extends Cubit<HomeState> {
     }
   }
 
-  void updatePost(PostModel updatedPost) {
+  void updatePost(PostModel updatedPost, List<String>? newImageLinks, List<File>? imageLinks, JobModel? newJob) async {
     final currentState = state;
+    await PostRepository().editPost(updatedPost, newImageLinks, imageLinks, newJob);
     if (currentState is HomeLoadedPost) {
       final updatedPosts = currentState.posts.map((post) {
         return post.id == updatedPost.id ? updatedPost : post;
@@ -30,6 +34,7 @@ class HomeCubit extends Cubit<HomeState> {
   }
 
   void deletePost(String postId) {
+    PostRepository().deletePost(postId);
     final currentState = state;
     if (currentState is HomeLoadedPost) {
       final updatedPosts = currentState.posts.where((post) => post.id != postId).toList();

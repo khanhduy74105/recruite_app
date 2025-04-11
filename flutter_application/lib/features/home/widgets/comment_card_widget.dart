@@ -9,13 +9,16 @@ import 'package:flutter_application/models/user_models.dart';
 import 'package:flutter_application/core/utils/format.dart';
 
 class CommentCardWidget extends StatelessWidget {
-  const CommentCardWidget({super.key, required this.comment});
+  const CommentCardWidget({super.key, required this.comment, this.onEditComment, this.onReplyComment, this.parentComment});
 
   final CommentModel comment;
-
+  final CommentModel? parentComment;
+  final Function(CommentModel a, {bool isRemove})? onEditComment;
+  final Function(CommentModel a)? onReplyComment;
   @override
   Widget build(BuildContext context) {
     UserModel user = comment.creator;
+    String currentUserId = SupabaseService.getCurrentUserId();
     return Card(
       elevation: 0,
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -74,17 +77,32 @@ class CommentCardWidget extends StatelessWidget {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () async {
+                        comment.likes = comment.likes.contains(currentUserId)
+                            ? comment.likes
+                                .where((element) => element != currentUserId)
+                                .toList()
+                            : [...comment.likes, currentUserId];
+                        CommentModel c = await CommentRepository()
+                          .editComment(comment);
+                        onEditComment?.call(c);
+                      },
                       child: Text(
-                        "Like",
+                        "Like(+${comment.likes.length})",
                         style: TextStyle(
                             color:
-                                comment.likes > 0 ? Colors.blue : Colors.grey),
+                                comment.likes.contains(currentUserId)
+                                    ? Colors.blue
+                                    : Colors.grey),
                       ),
                     ),
                     const SizedBox(width: 16),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () {
+                        if (onReplyComment != null) {
+                          onReplyComment!(comment);
+                        }
+                      },
                       child: const Text(
                         "Reply",
                       ),
@@ -96,7 +114,7 @@ class CommentCardWidget extends StatelessWidget {
           ),
           IconButton(
               onPressed: () {
-                if (comment.creator.id != SupabaseService.getCurrentUserId()) {
+                if (comment.creator.id != currentUserId) {
                   return;
                 }
                 showModalWrapper(context, [
@@ -112,6 +130,13 @@ class CommentCardWidget extends StatelessWidget {
                       await CommentRepository()
                           .deleteComment(comment.id)
                           .then((value) {
+                        if (comment.parentCommentId == null && parentComment == null) {
+                                                   onEditComment?.call(comment, isRemove: true);
+
+                        } else {
+                          parentComment?.replies.removeWhere((element) => element.id == comment.id);
+                          onEditComment?.call(parentComment!);
+                        }
                         if (value) {
                           Navigator.pop(context);
                         }

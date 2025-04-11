@@ -6,7 +6,7 @@ class JobRepository {
   final SupabaseClient supabase = Supabase.instance.client;
 
   Future<JobModel> createJob(JobModel jobModel) async {
-    // try {
+    try {
       final respones = await supabase.from('job').insert({
         'title': jobModel.title,
         'description': jobModel.description,
@@ -14,11 +14,10 @@ class JobRepository {
         'company_name': jobModel.companyName,
         'location': jobModel.location,
       }).select();
-      print('respones: ${respones[0]}');
       return JobModel.fromJson(respones[0]);
-    // } catch (e) {
-    //   throw e.toString();
-    // }
+    } catch (e) {
+      throw e.toString();
+    }
   }
 
   Future<bool> updateJob(JobModel jobModel) async {
@@ -62,7 +61,10 @@ class JobRepository {
     try {
       final response = await supabase
           .from('job')
-          .select()
+          .select('''
+            *,
+            user: creator(*)
+          ''')
           .order('created_at', ascending: false);
       return (response as List).map((e) => JobModel.fromJson(e)).toList();
     } catch (e) {

@@ -7,7 +7,7 @@ import 'package:flutter_application/features/home/cubit/home_cubit.dart';
 import 'package:flutter_application/features/home/pages/post_detail.dart';
 import 'package:flutter_application/features/home/widgets/post_photo_grid.dart';
 import 'package:flutter_application/features/post/cubit/post_cubit.dart';
-import 'package:flutter_application/features/post/repository/post_repository.dart';
+import 'package:flutter_application/features/post/pages/post_page.dart';
 import 'package:flutter_application/features/post/widgets/job_card.dart';
 import 'package:flutter_application/models/comment_model.dart';
 import 'package:flutter_application/models/post_model.dart';
@@ -17,10 +17,14 @@ import 'comment_card_widget.dart';
 
 class PostCardWidget extends StatefulWidget {
   const PostCardWidget(
-      {super.key, required this.postModel, this.isExpandedComments = false});
+      {super.key,
+      required this.postModel,
+      this.isExpandedComments = false,
+      this.isEditingMode = false});
 
   final PostModel postModel;
   final bool isExpandedComments;
+  final bool isEditingMode;
 
   @override
   State<PostCardWidget> createState() => _PostCardWidgetState();
@@ -63,35 +67,28 @@ class PostAction extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       mainAxisSize: MainAxisSize.max,
       children: [
-        BlocBuilder<HomeCubit, HomeState>(
-          builder: (context, state) {
-            return TextButton.icon(
-              onPressed: () async {
-                List<String> likes = postModel.likes.contains(userId)
-                    ? postModel.likes
-                        .where((element) => element != userId)
-                        .toList()
-                    : [...postModel.likes, userId];
-                await PostRepository().editPost(postModel.copyWith(
+        TextButton.icon(
+          onPressed: () {
+            List<String> likes = postModel.likes.contains(userId)
+                ? postModel.likes.where((element) => element != userId).toList()
+                : [...postModel.likes, userId];
+
+            context.read<HomeCubit>().updatePost(
+                postModel.copyWith(
                   likes: likes,
-                ));
-                context.read<HomeCubit>().updatePost(postModel.copyWith(
-                      likes: likes,
-                    ));
-              },
-              icon: Icon(
-                postModel.likes.contains(userId)
-                    ? Icons.thumb_up_alt
-                    : Icons.thumb_up_off_alt,
-                size: 16,
-                color: color,
-              ),
-              label: Text(
-                "Like(${postModel.likes.length})",
-                style: TextStyle(color: color),
-              ),
-            );
+                ),null, null, postModel.job);
           },
+          icon: Icon(
+            postModel.likes.contains(userId)
+                ? Icons.thumb_up_alt
+                : Icons.thumb_up_off_alt,
+            size: 16,
+            color: color,
+          ),
+          label: Text(
+            "Like(${postModel.likes.length})",
+            style: TextStyle(color: color),
+          ),
         ),
         TextButton.icon(
           onPressed: () {
@@ -219,7 +216,14 @@ class PostUserHeader extends StatelessWidget {
               builder: (context, state) {
                 return ListTile(
                   title: const Text("Edit"),
-                  onTap: () {
+                  onTap: () async {
+                     await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CreatePostScreen(
+                                postModel: postModel,
+                              )),
+                    );
                     Navigator.pop(context);
                   },
                 );
@@ -236,9 +240,13 @@ class PostComment extends StatefulWidget {
   const PostComment({
     super.key,
     required this.comments,
+    this.onEditComment,
+    this.onReplyComment,
   });
 
   final List<CommentModel> comments;
+  final Function(CommentModel comment, {bool isRemove})? onEditComment;
+  final Function(CommentModel c)? onReplyComment;
 
   @override
   State<PostComment> createState() => _PostCommentState();
@@ -263,7 +271,32 @@ class _PostCommentState extends State<PostComment> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: widget.comments.length,
             itemBuilder: (context, index) {
-              return CommentCardWidget(comment: widget.comments[index]);
+              CommentModel comment = widget.comments[index];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CommentCardWidget(
+                    comment: comment,
+                    onEditComment: widget.onEditComment,
+                    onReplyComment: widget.onReplyComment,
+                  ),
+                  const SizedBox(height: 10),
+                  if (comment.replies.isNotEmpty)
+                    Padding(
+                      padding: EdgeInsets.only(left: 24.0),
+                      child: Column(
+                        children: comment.replies
+                            .map((reply) => CommentCardWidget(
+                                  comment: reply,
+                                  parentComment: comment,
+                                  onEditComment: widget.onEditComment,
+                                  onReplyComment: widget.onReplyComment,
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                ],
+              );
             },
           ),
         ],

@@ -6,9 +6,12 @@ import 'package:flutter_application/core/services/supabase_service.dart';
 import 'package:flutter_application/core/ui/button.dart';
 import 'package:flutter_application/core/ui/show_bottom.dart';
 import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
+import 'package:flutter_application/features/home/cubit/home_cubit.dart';
+import 'package:flutter_application/features/home/pages/home_page.dart';
 import 'package:flutter_application/features/post/cubit/post_cubit.dart';
 import 'package:flutter_application/features/post/widgets/job_card.dart';
 import 'package:flutter_application/models/job_model.dart';
+import 'package:flutter_application/models/post_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -79,7 +82,9 @@ class VisibilitySelector extends StatelessWidget {
 }
 
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  const CreatePostScreen({super.key, this.postModel});
+
+  final PostModel? postModel;
 
   @override
   CreatePostScreenState createState() => CreatePostScreenState();
@@ -87,10 +92,27 @@ class CreatePostScreen extends StatefulWidget {
 
 class CreatePostScreenState extends State<CreatePostScreen> {
   final List<File> selectedImages = []; // List to store selected images
+  List<String> imageUrls = []; // List to store image URLs
   String content = '';
   String visibility = 'public';
   TextEditingController contentController = TextEditingController();
   JobModel? jobModel;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.postModel != null) {
+      contentController.text = widget.postModel!.content;
+      content = widget.postModel!.content;
+      visibility = widget.postModel!.visibility;
+      jobModel = widget.postModel!.job;
+      if (
+        widget.postModel!.imageLinks.isNotEmpty
+      ){
+        imageUrls = widget.postModel!.imageLinks;
+      }
+    }
+  }
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -161,10 +183,18 @@ class CreatePostScreenState extends State<CreatePostScreen> {
               return Padding(
                 padding: const EdgeInsets.only(right: 10),
                 child: CustomTextButton(
-                  text: "Đăng",
+                  text: "Post",
                   activeColor: AppColors.primary,
                   textColor: Colors.white,
                   onPressed: () async {
+                    if (widget.postModel != null) {
+                      widget.postModel!.content = content;
+                      widget.postModel!.visibility = visibility;
+                      context.read<HomeCubit>().updatePost(widget.postModel!, imageUrls, selectedImages, jobModel);
+                      Navigator.pop(context);
+                      return;
+                    }
+
                     if (state is AuthLoggedIn) {
                       context.read<PostCubit>().createPost(state.user.id,
                           content, selectedImages, visibility, jobModel);
@@ -224,6 +254,53 @@ class CreatePostScreenState extends State<CreatePostScreen> {
                           });
                         },
                       ),
+                    ),
+                  if (imageUrls.isNotEmpty)
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8,
+                        mainAxisSpacing: 8,
+                      ),
+                      itemCount: imageUrls.length,
+                      itemBuilder: (context, index) {
+                        String imageUrl = SupabaseService.getUrl(
+                          imageUrls[index],
+                        );
+                        return Stack(
+                          children: [
+                             Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            image: DecorationImage(
+                              image: NetworkImage(imageUrl),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    imageUrls.removeAt(index);
+                                  });
+                                },
+                                child: const CircleAvatar(
+                                  radius: 12,
+                                  backgroundColor: Colors.black54,
+                                  child: Icon(Icons.close,
+                                      size: 16, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   if (selectedImages.isNotEmpty)
                     GridView.builder(

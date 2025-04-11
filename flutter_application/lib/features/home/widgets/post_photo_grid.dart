@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_application/features/home/widgets/photo_viewer_page.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PhotoGrid extends StatefulWidget {
   final int maxImages;
@@ -57,9 +58,19 @@ class _PhotoGridState extends State<PhotoGrid> {
 
         if (remaining == 0) {
           return GestureDetector(
-            child: Image.network(
-              imageUrl,
-              fit: BoxFit.cover,
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              memCacheWidth: 250,
+              maxWidthDiskCache: 500,
+              cacheKey: 'unique-key-$imageUrl',
+              imageBuilder: (context, imageProvider) => Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: imageProvider,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
             ),
             onTap: () => Navigator.push(
               context,
@@ -85,7 +96,20 @@ class _PhotoGridState extends State<PhotoGrid> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.network(imageUrl, fit: BoxFit.cover),
+                CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  memCacheWidth: 250,
+                  maxWidthDiskCache: 500,
+                  cacheKey: 'unique-key-$imageUrl',
+                  imageBuilder: (context, imageProvider) => Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: imageProvider,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
                 Positioned.fill(
                   child: Container(
                     alignment: Alignment.center,
@@ -102,9 +126,19 @@ class _PhotoGridState extends State<PhotoGrid> {
         }
       } else {
         return GestureDetector(
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
+          child: CachedNetworkImage(
+            imageUrl: imageUrl,
+            memCacheWidth: 250,
+            maxWidthDiskCache: 500,
+            cacheKey: 'unique-key-$imageUrl',
+            imageBuilder: (context, imageProvider) => Container(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: imageProvider,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
           ),
           onTap: () => Navigator.push(
             context,

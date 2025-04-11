@@ -24,6 +24,7 @@ class _JobCreatePageState extends State<JobCreatePage> {
   final JobModel jobModel = JobModel(
     id: '', // Placeholder, should be generated or assigned later
     title: '',
+    creator: '',
     description: '',
     jdUrls: [],
     files: [],

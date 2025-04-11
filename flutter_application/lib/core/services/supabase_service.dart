@@ -33,6 +33,14 @@ class SupabaseService {
     }
   }
 
+  static void delete(String fileName) async {
+    try {
+      await Supabase.instance.client.storage.from(bucketName).remove([fileName]);
+    } catch (e) {
+      print('Error deleting file: $e');
+    }
+  }
+
   static String getUrl(String fileName) {
     try {
       final String url = Supabase.instance.client.storage
