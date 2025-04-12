@@ -27,13 +27,21 @@ class ProfileCubit extends Cubit<ProfileState> {
             *,
             experience(*),
             education(*),
-            post!post_creator_id_fkey(*),
+            post!post_creator_id_fkey(*,
+              job: job!post_job_fkey ( 
+              *,
+              user: creator(
+                *
+              )
+            )
+            ),
             job_application(*)
           ''').eq('id', userId).single();
 
       final user = _mapResponseToUserModel(response);
       emit(ProfileLoaded(user));
-    } catch (e) {
+    } catch (e, s) {
+      print('Error fetching profile: $e\n$s');
       emit(ProfileError('Failed to load profile: $e'));
     }
   }
