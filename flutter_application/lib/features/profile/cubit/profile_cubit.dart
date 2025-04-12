@@ -2,98 +2,36 @@ import 'dart:io';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:image_picker/image_picker.dart';
-import '../../../models/user_models.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_application/models/experience_model.dart';
 import 'package:flutter_application/models/education_model.dart';
-import 'package:flutter_application/models/skill_model.dart';
-import 'package:flutter_application/models/post_model.dart';
+import 'package:flutter_application/models/experience_model.dart';
 import 'package:flutter_application/models/job_application_model.dart';
+import 'package:flutter_application/models/post_model.dart';
+import 'package:flutter_application/models/skill_model.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../models/user_models.dart';
 
 part 'profile_state.dart';
 
 class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit() : super(ProfileInitial());
 
+  final _supabase = Supabase.instance.client;
+
   Future<void> fetchProfile(String userId) async {
     try {
       emit(ProfileLoading());
 
-      final supabase = Supabase.instance.client;
+      final response = await _supabase.from('user').select('''
+            *,
+            experience(*),
+            education(*),
+            post!post_creator_id_fkey(*),
+            job_application(*)
+          ''').eq('id', userId).single();
 
-      // Fetch user data
-      final userResponse = await supabase
-          .from('user')
-          .select()
-          .eq('id', userId)
-          .single();
-
-      // Fetch experiences
-      final experiencesResponse = await supabase
-          .from('experience')
-          .select()
-          .eq('user_id', userId);
-
-      // Fetch educations
-      final educationsResponse = await supabase
-          .from('education')
-          .select()
-          .eq('user_id', userId);
-
-      // Fetch skills
-      final skillsResponse = await supabase
-          .from('user_skill')
-          .select('skill(*), level')
-          .eq('user_id', userId);
-
-      // Fetch posts
-      final postsResponse = await supabase
-          .from('post')
-          .select()
-          .eq('creator_id', userId);
-
-      // Fetch job applications
-      final jobApplicationsResponse = await supabase
-          .from('job_application')
-          .select()
-          .eq('user_id', userId);
-
-      // Construct the UserModel
-      final user = UserModel(
-        id: userResponse['id'],
-        resume: userResponse['resume'],
-        email: userResponse['email'],
-        createdAt: userResponse['created_at'] != null
-            ? DateTime.parse(userResponse['created_at'])
-            : null,
-        phone: userResponse['phone'],
-        bio: userResponse['bio'],
-        role: userResponse['role'] != null
-            ? userRoleFromString(userResponse['role'])
-            : null,
-        headline: userResponse['headline'],
-        location: userResponse['location'],
-        avatarUrl: userResponse['avatar_url'],
-        fullName: 'Unknown', // Assuming username maps to fullName
-        experiences: experiencesResponse
-            .map((e) => ExperienceModel.fromJson(e))
-            .toList(),
-        educations: educationsResponse
-            .map((e) => EducationModel.fromJson(e))
-            .toList(),
-        skills: skillsResponse.map((e) => SkillModel.fromJson({
-          'id': e['skill']['id'],
-          'title': e['skill']['title'],
-          'description': e['skill']['description'],
-          'level': e['level'],
-        })).toList(),
-        posts: postsResponse.map((e) => PostModel.fromJson(e)).toList(),
-        jobApplications: jobApplicationsResponse
-            .map((e) => JobApplicationModel.fromJson(e))
-            .toList(),
-      );
-
+      final user = _mapResponseToUserModel(response);
       emit(ProfileLoaded(user));
     } catch (e) {
       emit(ProfileError('Failed to load profile: $e'));
@@ -104,7 +42,6 @@ class ProfileCubit extends Cubit<ProfileState> {
     try {
       emit(AvatarUpdating());
 
-      // Pick image from gallery or camera
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: source);
 
@@ -113,119 +50,145 @@ class ProfileCubit extends Cubit<ProfileState> {
         return;
       }
 
-      final supabase = Supabase.instance.client;
-
-      // Ensure user is authenticated
-      final session = supabase.auth.currentSession;
+      final session = _supabase.auth.currentSession;
       if (session == null) {
         emit(AvatarUpdateError('User not authenticated'));
         return;
       }
 
-      // Upload image to Supabase Storage
       final file = File(pickedFile.path);
       final fileName = '${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      await supabase.storage
-          .from('avatars')
-          .upload(fileName, file);
+      await _supabase.storage.from('avatars').upload(fileName, file);
 
-      // Get the public URL of the uploaded image
-      final avatarUrl = supabase.storage.from('avatars').getPublicUrl(fileName);
+      final avatarUrl =
+          _supabase.storage.from('avatars').getPublicUrl(fileName);
 
-      // Update user_info table with the new avatar URL
-      await supabase
+      await _supabase
           .from('user_info')
-          .update({'avatar_url': avatarUrl})
-          .eq('user_id', userId);
+          .update({'avatar_url': avatarUrl}).eq('user_id', userId);
 
       emit(AvatarUpdated(avatarUrl));
-
-      // Refresh the profile to reflect the updated avatar
       await fetchProfile(userId);
     } catch (e) {
       emit(AvatarUpdateError('Failed to update avatar: $e'));
     }
   }
 
-  Future<void> updateExperiences(String userId, List<ExperienceModel> experiences) async {
+  Future<void> updateExperiences(
+      String userId, List<ExperienceModel> experiences) async {
     try {
-      emit(ProfileLoading());
+      emit(ProfileUpdating('Updating experiences...'));
 
-      final supabase = Supabase.instance.client;
+      final expData =
+          experiences.map((exp) => exp.toJson()..['user_id'] = userId).toList();
 
-      // Map experiences to Supabase format
-      final List<Map<String, dynamic>> expData = experiences.map((exp) => exp.toJson()).toList();
-
-      // Clear existing experiences
-      await supabase
-          .from('experience') // Use 'experience' table as per fetchProfile
-          .delete()
-          .eq('user_id', userId);
-
-      // Insert new experiences if any
+      await _supabase.from('experience').delete().eq('user_id', userId);
       if (expData.isNotEmpty) {
-        await supabase
-            .from('experience')
-            .insert(expData);
+        await _supabase.from('experience').insert(expData);
       }
 
-      // Re-fetch profile to update state
-      final userResponse = await supabase
+      await fetchProfile(userId);
+    } catch (e) {
+      emit(ProfileError('Failed to update experiences: $e'));
+    }
+  }
+
+  Future<void> updateEducations(
+      String userId, List<EducationModel> educations) async {
+    try {
+      emit(ProfileUpdating('Updating educations...'));
+
+      final eduData =
+          educations.map((edu) => edu.toJson()..['user_id'] = userId).toList();
+
+      await _supabase.from('education').delete().eq('user_id', userId);
+      if (eduData.isNotEmpty) {
+        await _supabase.from('education').insert(eduData);
+      }
+
+      await fetchProfile(userId);
+    } catch (e) {
+      emit(ProfileError('Failed to update educations: $e'));
+    }
+  }
+
+  Future<void> updateBio(String userId, String bio) async {
+    try {
+      emit(const ProfileUpdating('Updating bio...'));
+
+      await _supabase.from('user').update({'bio': bio}).eq('id', userId);
+
+      await fetchProfile(userId);
+    } catch (e) {
+      emit(ProfileError('Failed to update bio: $e'));
+    }
+  }
+
+  Future<void> updateHeadline(String userId, String headline) async {
+    try {
+      emit(ProfileUpdating('Updating headline...'));
+
+      await _supabase
           .from('user')
-          .select('''
-            *,
-            experience (*),
-            post (*),
-            education (*),
-            user_skill (skill(*), level),
-            job_application (*)
-          ''')
-          .eq('id', userId)
-          .single();
+          .update({'headline': headline}).eq('id', userId);
 
-      final experiencesResponse = userResponse['experience'] ?? [];
-      final postsResponse = userResponse['post'] ?? [];
-      final educationsResponse = userResponse['education'] ?? [];
-      final skillsResponse = userResponse['user_skill'] ?? [];
-      final jobApplicationsResponse = userResponse['job_application'] ?? [];
+      await fetchProfile(userId);
+    } catch (e) {
+      emit(ProfileError('Failed to update headline: $e'));
+    }
+  }
 
-      final user = UserModel(
-        id: userResponse['id'],
-        resume: userResponse['resume'],
-        email: userResponse['email'],
-        createdAt: userResponse['created_at'] != null
-            ? DateTime.parse(userResponse['created_at'])
-            : null,
-        phone: userResponse['phone'],
-        bio: userResponse['bio'],
-        role: userResponse['role'] != null
-            ? userRoleFromString(userResponse['role'])
-            : null,
-        headline: userResponse['headline'],
-        location: userResponse['location'],
-        avatarUrl: userResponse['avatar_url'],
-        fullName: 'Unknown',
-        experiences: experiencesResponse
-            .map((e) => ExperienceModel.fromJson(e))
-            .toList(),
-        educations: educationsResponse
-            .map((e) => EducationModel.fromJson(e))
-            .toList(),
-        skills: skillsResponse.map((e) => SkillModel.fromJson({
+  Future<void> updateLocation(String userId, String location) async {
+    try {
+      emit(ProfileUpdating('Updating location...'));
+
+      await _supabase
+          .from('user')
+          .update({'location': location}).eq('id', userId);
+
+      await fetchProfile(userId);
+    } catch (e) {
+      emit(ProfileError('Failed to update location: $e'));
+    }
+  }
+
+  UserModel _mapResponseToUserModel(Map<String, dynamic> response) {
+    return UserModel(
+      id: response['id'],
+      resume: response['resume'],
+      email: response['email'],
+      createdAt: response['created_at'] != null
+          ? DateTime.parse(response['created_at'])
+          : null,
+      phone: response['phone'],
+      bio: response['bio'],
+      role: response['role'] != null
+          ? userRoleFromString(response['role'])
+          : null,
+      headline: response['headline'],
+      location: response['location'],
+      avatarUrl: response['avatar_url'],
+      fullName: response['full_name'] ?? 'Unknown',
+      experiences: (response['experience'] as List<dynamic>? ?? [])
+          .map((e) => ExperienceModel.fromJson(e))
+          .toList(),
+      educations: (response['education'] as List<dynamic>? ?? [])
+          .map((e) => EducationModel.fromJson(e))
+          .toList(),
+      skills: (response['user_skill'] as List<dynamic>? ?? []).map((e) {
+        return SkillModel.fromJson({
           'id': e['skill']['id'],
           'title': e['skill']['title'],
           'description': e['skill']['description'],
           'level': e['level'],
-        })).toList(),
-        posts: postsResponse.map((e) => PostModel.fromJson(e)).toList(),
-        jobApplications: jobApplicationsResponse
-            .map((e) => JobApplicationModel.fromJson(e))
-            .toList(),
-      );
-
-      emit(ProfileLoaded(user));
-    } catch (e) {
-      emit(ProfileError('Failed to update experiences: $e'));
-    }
+        });
+      }).toList(),
+      posts: (response['post'] as List<dynamic>? ?? [])
+          .map((e) => PostModel.fromJson(e))
+          .toList(),
+      jobApplications: (response['job_application'] as List<dynamic>? ?? [])
+          .map((e) => JobApplicationModel.fromJson(e))
+          .toList(),
+    );
   }
 }

@@ -10,6 +10,7 @@ import 'package:flutter_application/features/home/cubit/home_cubit.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
 import 'package:flutter_application/features/network/cubit/network_cubit.dart';
 import 'package:flutter_application/features/post/cubit/post_cubit.dart';
+import 'package:flutter_application/features/setting/cubit/setting_cubit.dart';
 import 'package:flutter_application/models/user_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,6 +24,7 @@ Future<void> main() async {
         BlocProvider(create: (_) => PostCubit()),
         BlocProvider(create: (_) => NetworkCubit()..getUsers()),
         BlocProvider(create: (_) => HomeCubit()..getPosts()),
+        BlocProvider(create: (_) => SettingsCubit()),
       ],
       child: const MyApp(),
     ),

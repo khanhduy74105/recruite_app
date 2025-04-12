@@ -1,22 +1,19 @@
 class SkillModel {
   final String id;
   final String title;
-  final String description;
-  final int level;
+  final String imgIllustrationLink;
 
   SkillModel({
     required this.id,
     required this.title,
-    required this.description,
-    required this.level,
+    required this.imgIllustrationLink,
   });
 
   factory SkillModel.fromJson(Map<String, dynamic> json) {
     return SkillModel(
       id: json['id'],
       title: json['title'],
-      description: json['description'],
-      level: json['level'],
+      imgIllustrationLink: json['img_illustration_link'],
     );
   }
 
@@ -24,8 +21,7 @@ class SkillModel {
     return {
       'id': id,
       'title': title,
-      'description': description,
-      'level': level,
+      'img_illustration_link': imgIllustrationLink,
     };
   }
 }

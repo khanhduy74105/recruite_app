@@ -11,6 +11,15 @@ class ProfileInitial extends ProfileState {}
 
 class ProfileLoading extends ProfileState {}
 
+class ProfileUpdating extends ProfileState {
+  final String message;
+
+  const ProfileUpdating(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}
+
 class ProfileLoaded extends ProfileState {
   final UserModel user;
 
@@ -32,12 +41,12 @@ class ProfileError extends ProfileState {
 class AvatarUpdating extends ProfileState {}
 
 class AvatarUpdated extends ProfileState {
-  final String newAvatarUrl;
+  final String avatarUrl;
 
-  const AvatarUpdated(this.newAvatarUrl);
+  const AvatarUpdated(this.avatarUrl);
 
   @override
-  List<Object?> get props => [newAvatarUrl];
+  List<Object?> get props => [avatarUrl];
 }
 
 class AvatarUpdateError extends ProfileState {

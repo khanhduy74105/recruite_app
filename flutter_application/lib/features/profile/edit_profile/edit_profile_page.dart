@@ -75,12 +75,12 @@ class _EditProfileContentState extends State<EditProfileContent> {
                 icon: const Icon(Icons.save),
                 onPressed: () {
                   context.read<EditProfileCubit>().updateProfile(
-                    userId: widget.user.id,
-                    bio: _bioController.text,
-                    headline: _headlineController.text,
-                    location: _locationController.text,
-                    avatarUrl: _avatarUrlController.text,
-                  );
+                        userId: widget.user.id,
+                        bio: _bioController.text,
+                        headline: _headlineController.text,
+                        location: _locationController.text,
+                        avatarUrl: _avatarUrlController.text,
+                      );
                 },
               );
             },

@@ -4,8 +4,8 @@ class EducationModel {
   final String school;
   final String degree;
   final String fieldOfStudy;
-  final DateTime? startDate;
-  final DateTime? endDate;
+  final String startDate;
+  final String? endDate;
 
   EducationModel({
     required this.id,
@@ -13,7 +13,7 @@ class EducationModel {
     required this.school,
     required this.degree,
     required this.fieldOfStudy,
-    this.startDate,
+    required this.startDate,
     this.endDate,
   });
 
@@ -24,8 +24,8 @@ class EducationModel {
       school: json['school'],
       degree: json['degree'],
       fieldOfStudy: json['field_of_study'],
-      startDate: json['start_date'] != null ? DateTime.parse(json['start_date']) : null,
-      endDate: json['end_date'] != null ? DateTime.parse(json['end_date']) : null,
+      startDate: json['start_date'],
+      endDate: json['end_date'],
     );
   }
 
@@ -36,8 +36,8 @@ class EducationModel {
       'school': school,
       'degree': degree,
       'field_of_study': fieldOfStudy,
-      'start_date': startDate?.toIso8601String(),
-      'end_date': endDate?.toIso8601String(),
+      'start_date': startDate,
+      'end_date': endDate,
     };
   }
 }

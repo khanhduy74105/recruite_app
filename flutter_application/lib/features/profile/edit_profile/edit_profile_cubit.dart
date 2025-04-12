@@ -39,7 +39,6 @@ class EditProfileCubit extends Cubit<EditProfileState> {
 
       final supabase = Supabase.instance.client;
 
-      // Update user table
       final userUpdates = {
         if (bio != null) 'bio': bio,
         if (headline != null) 'headline': headline,
