@@ -13,6 +13,7 @@ class ResumeExtractor:
         text = ""
         try:
             doc = fitz.open(pdf_path)
+            print(doc)
             for page in doc:
                 text += page.get_text("text") + "\n"
             doc.close()
