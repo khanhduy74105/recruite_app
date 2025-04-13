@@ -1,4 +1,6 @@
-class EducationModel {
+import '../features/profile/model/timeline_item.dart';
+
+class EducationModel implements TimelineItem{
   final String id;
   final String userId;
   final String school;

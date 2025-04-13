@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/features/home/widgets/post_card_widget.dart';
 import 'package:flutter_application/features/profile/widgets/resume_tab.dart';
 import 'package:flutter_application/features/profile/widgets/skill_grid.dart';
 import 'package:flutter_application/features/setting/page/account_setting_page.dart';
 import 'package:flutter_application/models/experience_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/education_model.dart';
@@ -64,11 +64,53 @@ class ProfileContent extends StatefulWidget {
 class _ProfileContentState extends State<ProfileContent>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late TimelineConfig<EducationModel> educationConfig;
+  late TimelineConfig<ExperienceModel> experienceConfig;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+
+    educationConfig = TimelineConfig<EducationModel>(
+      lineXY: 0.2,
+      indicatorSize: 30,
+      indicatorColor: Colors.blue,
+      lineColor: Colors.grey,
+      lineThickness: 4,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      cardPadding: const EdgeInsets.all(16),
+      companyTextStyle:
+          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      positionTextStyle:
+          const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      descriptionTextStyle: const TextStyle(fontSize: 14),
+      dateTextStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+      typeName: 'Education',
+      formBuilder: buildEducationForm,
+      customCardBuilder: (education) =>
+          EducationTile(education: education, config: educationConfig),
+    );
+
+    experienceConfig = TimelineConfig<ExperienceModel>(
+      lineXY: 0.2,
+      indicatorSize: 30,
+      indicatorColor: Colors.green,
+      lineColor: Colors.grey,
+      lineThickness: 4,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      cardPadding: const EdgeInsets.all(16),
+      companyTextStyle:
+          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      positionTextStyle:
+          const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      descriptionTextStyle: const TextStyle(fontSize: 14),
+      dateTextStyle: const TextStyle(fontSize: 12, color: Colors.grey),
+      typeName: 'Experience',
+      formBuilder: buildExperienceForm,
+      customCardBuilder: (experience) =>
+          ExperienceTile(experience: experience, config: experienceConfig),
+    );
   }
 
   @override
@@ -120,12 +162,6 @@ class _ProfileContentState extends State<ProfileContent>
   @override
   Widget build(BuildContext context) {
     final List<ExperienceModel> timelineExperiences = widget.user.experiences;
-
-    String formatDate(String date) {
-      if (date.isEmpty) return "Present";
-      final DateTime parsedDate = DateTime.parse(date);
-      return DateFormat('MMMM yyyy').format(parsedDate);
-    }
 
     return CustomScrollView(
       slivers: [
@@ -255,198 +291,17 @@ class _ProfileContentState extends State<ProfileContent>
                 itemCount: widget.user.posts.length,
                 itemBuilder: (context, index) {
                   final post = widget.user.posts[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(post.content),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Posted on: ${post.createdAt.toString()}',
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
+                  return PostCardWidget(postModel: post);
                 },
               ),
               ExperienceTimelineContent(
                 experiences: timelineExperiences,
-                config: TimelineConfig<ExperienceModel>(
-                  lineXY: 0.15,
-                  indicatorSize: 25.0,
-                  indicatorColor: Colors.green,
-                  lineColor: Colors.green,
-                  lineThickness: 4.0,
-                  companyTextStyle: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  positionTextStyle: const TextStyle(
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.blueGrey,
-                  ),
-                  dateTextStyle: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                  descriptionTextStyle: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
-                  dateFormatter: formatDate,
-                  customCardBuilder: (experience) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.3),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      width: double.infinity,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            experience.company,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            experience.position,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontStyle: FontStyle.italic,
-                              color: Colors.blueGrey,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${experience.startDate} - ${experience.endDate}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            experience.description,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                config: experienceConfig,
                 userId: widget.userId,
               ),
               EducationTimelineContent(
                 educations: widget.user.educations,
-                config: TimelineConfig<EducationModel>(
-                  lineXY: 0.15,
-                  indicatorSize: 25.0,
-                  indicatorColor: Colors.green,
-                  lineColor: Colors.green,
-                  lineThickness: 4.0,
-                  companyTextStyle: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  positionTextStyle: const TextStyle(
-                    fontSize: 16,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.blueGrey,
-                  ),
-                  dateTextStyle: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                  descriptionTextStyle: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black54,
-                  ),
-                  dateFormatter: formatDate,
-                  customCardBuilder: (education) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(vertical: 8.0),
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8.0),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.3),
-                            spreadRadius: 2,
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      width: double.infinity,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            education.school,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            education.degree,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontStyle: FontStyle.italic,
-                              color: Colors.blueGrey,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            education.fieldOfStudy,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "${formatDate(education.startDate)} - ${education.endDate != null ? formatDate(education.endDate!) : 'Present'}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                config: educationConfig,
                 userId: widget.userId,
               ),
               SkillsGrid(userId: widget.userId),
@@ -469,34 +324,28 @@ class TimelineConfig<T> {
   final EdgeInsets cardPadding;
   final TextStyle companyTextStyle;
   final TextStyle positionTextStyle;
-  final TextStyle dateTextStyle;
   final TextStyle descriptionTextStyle;
-  final String Function(String date)? dateFormatter;
-  final Widget Function(T data)? customCardBuilder;
+  final TextStyle dateTextStyle;
+  final Widget Function(T)? customCardBuilder;
+  final String Function(String)? dateFormatter;
+  final String typeName; // e.g., "Education" or "Experience"
+  final Widget Function(T?, Function(T))? formBuilder;
 
-  const TimelineConfig({
-    this.lineXY = 0.2,
-    this.indicatorSize = 20.0,
-    this.indicatorColor = Colors.blueAccent,
-    this.lineColor = Colors.blue,
-    this.lineThickness = 3.0,
-    this.padding = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-    this.cardPadding = const EdgeInsets.all(16.0),
-    this.companyTextStyle = const TextStyle(
-      fontSize: 18,
-      fontWeight: FontWeight.bold,
-    ),
-    this.positionTextStyle = const TextStyle(
-      fontSize: 16,
-      fontStyle: FontStyle.italic,
-      color: Colors.grey,
-    ),
-    this.dateTextStyle = const TextStyle(
-      fontSize: 14,
-      color: Colors.grey,
-    ),
-    this.descriptionTextStyle = const TextStyle(fontSize: 14),
-    this.dateFormatter,
+  TimelineConfig({
+    required this.lineXY,
+    required this.indicatorSize,
+    required this.indicatorColor,
+    required this.lineColor,
+    required this.lineThickness,
+    required this.padding,
+    required this.cardPadding,
+    required this.companyTextStyle,
+    required this.positionTextStyle,
+    required this.descriptionTextStyle,
+    required this.dateTextStyle,
     this.customCardBuilder,
+    this.dateFormatter,
+    required this.typeName,
+    this.formBuilder,
   });
 }

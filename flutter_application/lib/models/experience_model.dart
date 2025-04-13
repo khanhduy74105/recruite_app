@@ -1,9 +1,11 @@
-class ExperienceModel {
+import '../features/profile/model/timeline_item.dart';
+
+class ExperienceModel implements TimelineItem {
   final String id;
   final String userId;
   final String company;
   final String position;
-  final String? startDate;
+  final String startDate;
   final String? endDate;
   final String description;
 
@@ -12,7 +14,7 @@ class ExperienceModel {
     required this.userId,
     required this.company,
     required this.position,
-    this.startDate,
+    required this.startDate,
     this.endDate,
     required this.description,
   });

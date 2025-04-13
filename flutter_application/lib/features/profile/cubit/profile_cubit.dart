@@ -24,19 +24,15 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(ProfileLoading());
 
       final response = await _supabase.from('user').select('''
-            *,
-            experience(*),
-            education(*),
-            post!post_creator_id_fkey(*,
-              job: job!post_job_fkey ( 
-              *,
-              user: creator(
-                *
-              )
-            )
-            ),
-            job_application(*)
-          ''').eq('id', userId).single();
+  *,
+  experience(*),
+  education(*),
+  post!post_creator_id_fkey(*,
+    creator: user!post_creator_id_fkey(*),
+    job: job!post_job_fkey(*)
+  ),
+  job_application(*)
+''').eq('id', userId).single();
 
       final user = _mapResponseToUserModel(response);
       emit(ProfileLoaded(user));

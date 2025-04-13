@@ -28,7 +28,6 @@ class PostModel {
     this.creator,
   });
 
-  // Factory method to create a PostModel from JSON
   factory PostModel.fromJson(Map<String, dynamic> json) {
     return PostModel(
       id: json['id'],
