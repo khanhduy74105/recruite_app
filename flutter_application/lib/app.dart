@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
+import 'package:flutter_application/features/message/pages/page.dart';
 import 'package:flutter_application/features/network/pages/network_page.dart';
 import 'package:flutter_application/features/post/pages/post_page.dart';
 import 'package:flutter_application/features/profile/pages/profile.dart';
@@ -104,9 +105,16 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
             ),
             actions: [
               GestureDetector(
-                onTap: () => _scaffoldKey.currentState?.openDrawer(),
-                child: CircleAvatar(
-                  backgroundImage: Image.asset("assets/profile.png").image,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MessagePage(),
+                    ),
+                  );
+                },
+                child: const Icon(
+                  Icons.message_rounded,
                 ),
               ),
               const SizedBox(width: 10),
