@@ -43,37 +43,11 @@ class TimelineTileWidget<T extends TimelineItem> extends StatelessWidget {
         thickness: config.lineThickness,
       ),
       endChild: Container(
-        width: double.infinity, // Ensure endChild takes full width
+        width: double.infinity,
         padding: config.padding,
-        child: Dismissible(
-          key: Key(item.id),
-          direction: DismissDirection.startToEnd,
-          onDismissed: (direction) => onDelete(item.id),
-          background: Container(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.only(left: 20.0),
-            child: const Icon(Icons.delete, color: Colors.white, size: 30),
-          ),
-          child: GestureDetector(
-            onTap: () {
-              if (config.formBuilder != null) {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  builder: (context) => config.formBuilder!(item, onEdit),
-                );
-              }
-            },
-            child: config.customCardBuilder != null
-                ? config.customCardBuilder!(item)
-                : _buildDefaultCard(context),
-          ),
-        ),
+        child: config.customCardBuilder != null
+            ? config.customCardBuilder!(item)
+            : _buildDefaultCard(context),
       ),
     );
   }

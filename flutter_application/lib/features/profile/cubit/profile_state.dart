@@ -22,11 +22,12 @@ class ProfileUpdating extends ProfileState {
 
 class ProfileLoaded extends ProfileState {
   final UserModel user;
+  final ConnectionStatus? connectionStatus;
 
-  const ProfileLoaded(this.user);
+  const ProfileLoaded(this.user, [this.connectionStatus]);
 
   @override
-  List<Object?> get props => [user];
+  List<Object?> get props => [user, connectionStatus];
 }
 
 class ProfileError extends ProfileState {

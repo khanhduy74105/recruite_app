@@ -1,18 +1,19 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application/app.dart';
-import 'package:flutter_application/core/constants/env.dart';
 import 'package:flutter_application/core/constants/theme.dart';
 import 'package:flutter_application/core/services/supabase_service.dart';
 import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
 import 'package:flutter_application/features/auth/pages/signup_page.dart';
 import 'package:flutter_application/features/home/cubit/home_cubit.dart';
-import 'package:flutter_application/features/home/pages/home_page.dart';
 import 'package:flutter_application/features/network/cubit/network_cubit.dart';
 import 'package:flutter_application/features/post/cubit/post_cubit.dart';
-import 'package:flutter_application/models/user_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'features/message/cubit/message_cubit.dart';
+import 'features/profile/cubit/profile_cubit.dart';
+import 'features/setting/cubit/setting_cubit.dart';
 
 Future<void> main() async {
   await SupabaseService.init();

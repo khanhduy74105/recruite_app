@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/features/profile/widgets/timeline_tile.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 
 import '../model/timeline_item.dart';
@@ -70,50 +69,28 @@ class _TimelineContentState<T extends TimelineItem> extends State<TimelineConten
 
   @override
   Widget build(BuildContext context) {
+    if (_items.isEmpty) {
+      return Center(
+        child: Text(
+          'No ${widget.config.typeName.toLowerCase()} added yet.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
-      itemCount: _items.length + 1,
+      itemCount: _items.length,
       itemBuilder: (context, index) {
-        if (index == _items.length) {
-          return TimelineTile(
-            alignment: TimelineAlign.start,
-            lineXY: widget.config.lineXY,
-            isLast: true,
-            isFirst: _items.isEmpty,
-            indicatorStyle: IndicatorStyle(
-              width: widget.config.indicatorSize,
-              color: widget.config.indicatorColor,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              iconStyle: IconStyle(iconData: Icons.add, color: Colors.white),
-            ),
-            beforeLineStyle: _items.isEmpty
-                ? const LineStyle()
-                : LineStyle(
-              color: widget.config.lineColor,
-              thickness: widget.config.lineThickness,
-            ),
-            endChild: Padding(
-              padding: widget.config.padding,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (widget.config.formBuilder != null) {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      builder: (context) => widget.config.formBuilder!(null, _addOrUpdateItem),
-                    );
-                  }
-                },
-                child: Text('Add ${widget.config.typeName}'),
-              ),
-            ),
-          );
-        }
         final item = _items[index];
         return TimelineTileWidget(
           item: item,
           isFirst: index == 0,
-          isLast: false,
+          isLast: index == _items.length - 1,
           config: widget.config,
           onEdit: _addOrUpdateItem,
           onDelete: _deleteItem,

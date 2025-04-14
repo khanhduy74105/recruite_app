@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -38,23 +36,15 @@ class ResumeState {
 
 class ResumeCubit extends Cubit<ResumeState> {
   final SupabaseClient supabase = Supabase.instance.client;
+  final String userId;
 
-  ResumeCubit() : super(ResumeState()) {
+  ResumeCubit({required this.userId}) : super(ResumeState()) {
     fetchResume();
   }
 
   Future<void> fetchResume() async {
     try {
       emit(state.copyWith(isLoading: true));
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) {
-        emit(state.copyWith(
-          isLoading: false,
-          error: 'User not authenticated',
-        ));
-        return;
-      }
-
       final response = await supabase
           .from('resume')
           .select()
@@ -74,76 +64,12 @@ class ResumeCubit extends Cubit<ResumeState> {
       ));
     }
   }
-
-  Future<void> uploadResume(File file) async {
-    try {
-      emit(state.copyWith(isLoading: true));
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) {
-        emit(state.copyWith(
-          isLoading: false,
-          error: 'User not authenticated',
-        ));
-        return;
-      }
-
-      final existingResume = await supabase
-          .from('resume')
-          .select()
-          .eq('user_id', userId)
-          .maybeSingle();
-
-      if (existingResume != null) {
-        final oldResume = ResumeModel.fromJson(existingResume);
-        final oldFilePath = oldResume.url.split('/').last;
-        await supabase.storage.from('resumes').remove([oldFilePath]);
-        await supabase.from('resume').delete().eq('user_id', userId);
-      }
-
-      final fileName = '${userId}_${const Uuid().v4()}.pdf';
-      final uploadResponse = await supabase.storage.from('resumes').upload(
-            fileName,
-            file,
-            fileOptions: const FileOptions(contentType: 'application/pdf'),
-          );
-
-      if (uploadResponse.isEmpty) {
-        emit(state.copyWith(
-          isLoading: false,
-          error: 'Failed to upload resume',
-        ));
-        return;
-      }
-
-      final publicUrl = supabase.storage.from('resumes').getPublicUrl(fileName);
-
-      final newResume = ResumeModel(
-        id: const Uuid().v4(),
-        url: publicUrl,
-      );
-
-      await supabase.from('resume').insert({
-        'id': newResume.id,
-        'user_id': userId,
-        'url': newResume.url,
-      });
-
-      emit(state.copyWith(
-        resume: newResume,
-        isLoading: false,
-        error: null,
-      ));
-    } catch (e) {
-      emit(state.copyWith(
-        isLoading: false,
-        error: 'Failed to upload resume: $e',
-      ));
-    }
-  }
 }
 
 class ResumeTab extends StatefulWidget {
-  const ResumeTab({super.key});
+  final String userId;
+
+  const ResumeTab({super.key, required this.userId});
 
   @override
   _ResumeTabState createState() => _ResumeTabState();
@@ -190,7 +116,7 @@ class _ResumeTabState extends State<ResumeTab> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => ResumeCubit(),
+      create: (context) => ResumeCubit(userId: widget.userId),
       child: BlocConsumer<ResumeCubit, ResumeState>(
         listener: (context, state) {
           if (state.resume != null && state.resume!.url.isNotEmpty) {
@@ -208,45 +134,6 @@ class _ResumeTabState extends State<ResumeTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton(
-                  onPressed: state.isLoading
-                      ? null
-                      : () async {
-                          FilePickerResult? result =
-                              await FilePicker.platform.pickFiles(
-                            type: FileType.custom,
-                            allowedExtensions: ['pdf'],
-                          );
-
-                          if (result != null) {
-                            if (kIsWeb) {
-                              final bytes = result.files.single.bytes;
-                              if (bytes != null) {
-                                final tempFile = File('temp.pdf')
-                                  ..writeAsBytesSync(bytes);
-                                context
-                                    .read<ResumeCubit>()
-                                    .uploadResume(tempFile);
-                              }
-                            } else {
-                              if (result.files.single.path != null) {
-                                final file = File(result.files.single.path!);
-                                context.read<ResumeCubit>().uploadResume(file);
-                              }
-                            }
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                  ),
-                  child: state.isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Upload CV (PDF)'),
-                ),
-                const SizedBox(height: 16),
                 if (state.error != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
@@ -264,33 +151,33 @@ class _ResumeTabState extends State<ResumeTab> {
                     child: state.isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : _localFilePath != null
-                            ? PDFView(
-                                key: ValueKey(_localFilePath),
-                                filePath: _localFilePath!,
-                                fitPolicy: FitPolicy.BOTH,
-                                enableSwipe: true,
-                                swipeHorizontal: false,
-                                autoSpacing: true,
-                                pageFling: true,
-                                onError: (error) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content:
-                                            Text('Failed to load PDF: $error')),
-                                  );
-                                },
-                                onRender: (pages) {
-                                  print("Rendered $pages pages");
-                                },
-                              )
-                            : const Center(
-                                child: Text(
-                                  'No CV uploaded yet.\nPlease upload a PDF file.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontSize: 16, color: Colors.grey),
-                                ),
-                              ),
+                        ? PDFView(
+                      key: ValueKey(_localFilePath),
+                      filePath: _localFilePath!,
+                      fitPolicy: FitPolicy.BOTH,
+                      enableSwipe: true,
+                      swipeHorizontal: false,
+                      autoSpacing: true,
+                      pageFling: true,
+                      onError: (error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                              Text('Failed to load PDF: $error')),
+                        );
+                      },
+                      onRender: (pages) {
+                        print("Rendered $pages pages");
+                      },
+                    )
+                        : const Center(
+                      child: Text(
+                        'No CV available.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 16, color: Colors.grey),
+                      ),
+                    ),
                   ),
                 ),
               ],

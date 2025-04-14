@@ -7,6 +7,8 @@ import 'package:flutter_application/models/user_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../profile/pages/profile.dart';
+
 class MyNetworkPage extends StatelessWidget {
   const MyNetworkPage({super.key});
 
@@ -187,8 +189,16 @@ class InvitationTile extends StatelessWidget {
         ],
       ),
       child: ListTile(
-        leading: UserAvatar(imagePath: user.avatarUrl, size: 50),
-        title: Text(user.fullName),
+        leading: GestureDetector(
+            onTap: () {
+              goProfile(context);
+            },
+            child: UserAvatar(imagePath: user.avatarUrl, size: 50)),
+        title: GestureDetector(
+            onTap: () {
+              goProfile(context);
+            },
+            child: Text(user.fullName)),
         subtitle: Text(user.headline ?? "Developer"),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -212,6 +222,15 @@ class InvitationTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void goProfile(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfilePage(userId: user.id),
       ),
     );
   }
@@ -289,17 +308,26 @@ class PeopleTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          UserAvatar(imagePath: user.avatarUrl, size: 100),
-          const SizedBox(height: 8),
-          Text(
-            user.fullName,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            user.headline ?? "Developer",
-            style: const TextStyle(fontSize: 12),
-            textAlign: TextAlign.center,
+          GestureDetector(
+            onTap: () {
+              goProfile(context);
+            },
+            child: Column(
+              children: [
+                UserAvatar(imagePath: user.avatarUrl, size: 100),
+                const SizedBox(height: 8),
+                Text(
+                  user.fullName,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  user.headline ?? "Developer",
+                  style: const TextStyle(fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 4),
           const Spacer(),
@@ -311,6 +339,16 @@ class PeopleTile extends StatelessWidget {
               child: const Text('Connect', style: TextStyle(fontSize: 14)),
             ),
         ],
+      ),
+    );
+  }
+
+  void goProfile(BuildContext context) {
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfilePage(userId: user.id),
       ),
     );
   }

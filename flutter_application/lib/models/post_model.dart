@@ -38,21 +38,24 @@ class PostModel {
       likes: List<String>.from(jsonDecode(json['likes'] ?? '[]')),
       comments: List<String>.from(jsonDecode(json['comments'] ?? '[]')),
       visibility: json['visibility'],
-      job: json['job'] != null ? JobModel.fromJson(json['job']) : null,
-      creator: json['creator'] != null ? UserModel.fromJson(json['creator']) : null,
+      job: json['job'] != null
+          ? JobModel.fromJson(Map<String, dynamic>.from(json['job'] as Map))
+          : null,
+      creator: json['creator'] != null
+          ? UserModel.fromJson(Map<String, dynamic>.from(json['creator'] as Map))
+          : null,
     );
   }
 
-  // Method to convert a PostModel to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'creator_id': creatorId,
       'content': content,
-      'image_links': imageLinks,
-      'createdAt': createdAt.toIso8601String(),
-      'likes': likes,
-      'comments': comments,
+      'image_links': jsonEncode(imageLinks),
+      'created_at': createdAt.toIso8601String(),
+      'likes': jsonEncode(likes),
+      'comments': jsonEncode(comments),
       'visibility': visibility,
     };
   }

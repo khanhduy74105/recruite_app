@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/core/services/supabase_service.dart';
 import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
 import 'package:flutter_application/features/message/pages/page.dart';
@@ -7,15 +8,16 @@ import 'package:flutter_application/features/post/pages/post_page.dart';
 import 'package:flutter_application/features/profile/pages/profile.dart';
 import 'package:flutter_application/features/notifications/pages/notifications_page.dart';
 import 'package:flutter_application/features/jobs/pages/jobs_page.dart';
+import 'package:flutter_application/features/setting/page/account_setting_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_application/features/setting/cubit/setting_cubit.dart';
 
 class AppBottomNavigatorBar extends StatefulWidget {
   const AppBottomNavigatorBar({super.key});
 
   static MaterialPageRoute route() => MaterialPageRoute(
-        builder: (context) => const AppBottomNavigatorBar(),
-      );
+    builder: (context) => const AppBottomNavigatorBar(),
+  );
 
   @override
   _AppBottomNavigatorBarState createState() => _AppBottomNavigatorBarState();
@@ -33,6 +35,13 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
     const JobsPage(),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    // Load user settings when the widget is initialized
+    context.read<SettingsCubit>().loadSettings();
+  }
+
   void _onItemTapped(int index) {
     if (index == 2) {
       showCreatePostScreen(context);
@@ -47,12 +56,51 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
     return Drawer(
       child: Column(
         children: [
-           UserAccountsDrawerHeader(
-            accountName: const Text("Nguyen Van A"),
-            accountEmail: const Text("nguyenvana@example.com"),
-            currentAccountPicture: CircleAvatar(
-              backgroundImage: Image.asset("assets/profile.png").image,
-            ),
+          BlocBuilder<SettingsCubit, SettingsState>(
+            builder: (context, state) {
+              if (state.isLoading) {
+                return const UserAccountsDrawerHeader(
+                  accountName: Text('Loading...'),
+                  accountEmail: Text('Loading...'),
+                  currentAccountPicture: CircleAvatar(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+              if (state.error != null) {
+                return UserAccountsDrawerHeader(
+                  accountName: const Text('Error'),
+                  accountEmail: Text(state.error!),
+                  currentAccountPicture: const CircleAvatar(
+                    child: Icon(Icons.error, color: Colors.red),
+                  ),
+                );
+              }
+
+              return UserAccountsDrawerHeader(
+                accountName: Text(state.user.fullName),
+                accountEmail: Text(state.user.email),
+                currentAccountPicture: CircleAvatar(
+                  backgroundImage: state.user.avatarUrl != null
+                      ? NetworkImage(state.user.avatarUrl!)
+                      : const AssetImage("assets/profile.png") as ImageProvider,
+                  onBackgroundImageError: (exception, stackTrace) {
+                    // Fallback to default image if the network image fails to load
+                    setState(() {});
+                  },
+                  child: state.user.avatarUrl == null
+                      ? const Icon(Icons.person, size: 40)
+                      : null,
+                ),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue, Colors.blueAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.person),
@@ -61,7 +109,7 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const ProfilePage()),
+                MaterialPageRoute(builder: (_) => ProfilePage(userId: SupabaseService.getCurrentUserId(),)),
               );
             },
           ),
@@ -70,6 +118,12 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
             title: const Text("Settings"),
             onTap: () {
               Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AccountSettingsScreen(),
+                ),
+              );
             },
           ),
           ListTile(
@@ -94,33 +148,33 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
         floatHeaderSlivers: true,
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
-          SliverAppBar(
-            pinned: false,
-            snap: true,
-            floating: true,
-            expandedHeight: 60,
-            leading: IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-            ),
-            actions: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MessagePage(),
-                    ),
-                  );
-                },
-                child: const Icon(
-                  Icons.message_rounded,
-                ),
+            SliverAppBar(
+              pinned: false,
+              snap: true,
+              floating: true,
+              expandedHeight: 60,
+              leading: IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
               ),
-              const SizedBox(width: 10),
-            ],
-          ),
-        ];
+              actions: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MessagePage(),
+                      ),
+                    );
+                  },
+                  child: const Icon(
+                    Icons.message_rounded,
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+            ),
+          ];
         },
         body: IndexedStack(
           index: _selectedIndex,

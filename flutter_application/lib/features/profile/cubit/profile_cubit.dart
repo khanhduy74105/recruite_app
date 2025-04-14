@@ -1,7 +1,8 @@
 import 'dart:io';
 
-import 'package:bloc/bloc.dart';
+import 'package:bloc/bloc.dart' show Cubit;
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_application/models/education_model.dart';
 import 'package:flutter_application/models/experience_model.dart';
 import 'package:flutter_application/models/job_application_model.dart';
@@ -9,7 +10,9 @@ import 'package:flutter_application/models/post_model.dart';
 import 'package:flutter_application/models/skill_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../models/user_connection.dart';
 import '../../../models/user_models.dart';
 
 part 'profile_state.dart';
@@ -19,7 +22,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   final _supabase = Supabase.instance.client;
 
-  Future<void> fetchProfile(String userId) async {
+  Future<void> fetchProfile(String userId, {String? viewerId}) async {
     try {
       emit(ProfileLoading());
 
@@ -35,10 +38,69 @@ class ProfileCubit extends Cubit<ProfileState> {
 ''').eq('id', userId).single();
 
       final user = _mapResponseToUserModel(response);
-      emit(ProfileLoaded(user));
+
+      ConnectionStatus? connectionStatus;
+      if (viewerId != null && viewerId != userId) {
+        final connectionResponse = await _supabase
+            .from('user_connection')
+            .select()
+            .or('and(user_id.eq.$viewerId,friend_id.eq.$userId),and(user_id.eq.$userId,friend_id.eq.$viewerId)')
+            .maybeSingle();
+
+        if (connectionResponse != null) {
+          connectionStatus = ConnectionStatus.values.firstWhere(
+            (e) => e.toString().split('.').last == connectionResponse['status'],
+            orElse: () => ConnectionStatus.pending,
+          );
+        }
+      }
+
+      emit(ProfileLoaded(user, connectionStatus));
     } catch (e, s) {
-      print('Error fetching profile: $e\n$s');
+      if (kDebugMode) {
+        print('Error fetching profile: $e\n$s');
+      }
       emit(ProfileError('Failed to load profile: $e'));
+    }
+  }
+
+  Future<void> createConnection(String userId, String friendId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) {
+        emit(const ProfileError('User not authenticated'));
+        return;
+      }
+
+      final connection = UserConnection(
+        id: const Uuid().v4(),
+        userId: currentUserId,
+        friendId: friendId,
+        senderId: currentUserId,
+        status: ConnectionStatus.pending,
+      );
+
+      await _supabase.from('user_connection').insert(connection.toJson());
+      await fetchProfile(friendId, viewerId: currentUserId);
+    } catch (e) {
+      emit(ProfileError('Failed to create connection: $e'));
+    }
+  }
+
+  Future<void> deleteConnection(String userId, String friendId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) {
+        emit(const ProfileError('User not authenticated'));
+        return;
+      }
+
+      await _supabase.from('user_connection').delete().or(
+          'and(user_id.eq.$currentUserId,friend_id.eq.$friendId),and(user_id.eq.$friendId,friend_id.eq.$currentUserId)');
+
+      await fetchProfile(friendId, viewerId: currentUserId);
+    } catch (e) {
+      emit(ProfileError('Failed to delete connection: $e'));
     }
   }
 
@@ -50,13 +112,13 @@ class ProfileCubit extends Cubit<ProfileState> {
       final pickedFile = await picker.pickImage(source: source);
 
       if (pickedFile == null) {
-        emit(AvatarUpdateError('No image selected'));
+        emit(const ProfileError('No image selected'));
         return;
       }
 
       final session = _supabase.auth.currentSession;
       if (session == null) {
-        emit(AvatarUpdateError('User not authenticated'));
+        emit(const ProfileError('User not authenticated'));
         return;
       }
 
@@ -74,14 +136,14 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(AvatarUpdated(avatarUrl));
       await fetchProfile(userId);
     } catch (e) {
-      emit(AvatarUpdateError('Failed to update avatar: $e'));
+      emit(ProfileError('Failed to update avatar: $e'));
     }
   }
 
   Future<void> updateExperiences(
       String userId, List<ExperienceModel> experiences) async {
     try {
-      emit(ProfileUpdating('Updating experiences...'));
+      emit(const ProfileUpdating('Updating experiences...'));
 
       final expData =
           experiences.map((exp) => exp.toJson()..['user_id'] = userId).toList();
@@ -100,7 +162,7 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> updateEducations(
       String userId, List<EducationModel> educations) async {
     try {
-      emit(ProfileUpdating('Updating educations...'));
+      emit(const ProfileUpdating('Updating educations...'));
 
       final eduData =
           educations.map((edu) => edu.toJson()..['user_id'] = userId).toList();
@@ -130,7 +192,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> updateHeadline(String userId, String headline) async {
     try {
-      emit(ProfileUpdating('Updating headline...'));
+      emit(const ProfileUpdating('Updating headline...'));
 
       await _supabase
           .from('user')
@@ -144,7 +206,7 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   Future<void> updateLocation(String userId, String location) async {
     try {
-      emit(ProfileUpdating('Updating location...'));
+      emit(const ProfileUpdating('Updating location...'));
 
       await _supabase
           .from('user')

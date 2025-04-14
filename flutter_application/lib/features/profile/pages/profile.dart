@@ -2,34 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application/features/home/widgets/post_card_widget.dart';
 import 'package:flutter_application/features/profile/widgets/resume_tab.dart';
 import 'package:flutter_application/features/profile/widgets/skill_grid.dart';
-import 'package:flutter_application/features/setting/page/account_setting_page.dart';
 import 'package:flutter_application/models/experience_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/education_model.dart';
 import '../../../models/user_models.dart';
-import '../../setting/cubit/setting_cubit.dart';
+import '../../../models/user_connection.dart';
 import '../cubit/profile_cubit.dart';
 import '../widgets/education_timeline_content.dart';
 import '../widgets/experience_time_line_content.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  final String userId;
+
+  const ProfilePage({Key? key, required this.userId}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) {
-      return const Center(child: Text('User not found'));
-    }
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
     return BlocProvider(
-      create: (context) => ProfileCubit()..fetchProfile(userId),
+      create: (context) => ProfileCubit()..fetchProfile(userId, viewerId: currentUserId),
       child: Scaffold(
         body: BlocConsumer<ProfileCubit, ProfileState>(
           listener: (context, state) {
-            if (state is AvatarUpdateError) {
+            if (state is ProfileError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.message)),
               );
@@ -41,7 +38,12 @@ class ProfilePage extends StatelessWidget {
             } else if (state is ProfileError) {
               return Center(child: Text(state.message));
             } else if (state is ProfileLoaded) {
-              return ProfileContent(user: state.user, userId: userId);
+              return ProfileContent(
+                user: state.user,
+                userId: userId,
+                connectionStatus: state.connectionStatus,
+                isOwnProfile: userId == currentUserId,
+              );
             }
             return const Center(child: Text('Please wait...'));
           },
@@ -54,15 +56,22 @@ class ProfilePage extends StatelessWidget {
 class ProfileContent extends StatefulWidget {
   final UserModel user;
   final String userId;
+  final ConnectionStatus? connectionStatus;
+  final bool isOwnProfile;
 
-  const ProfileContent({required this.user, required this.userId, super.key});
+  const ProfileContent({
+    required this.user,
+    required this.userId,
+    this.connectionStatus,
+    required this.isOwnProfile,
+    super.key,
+  });
 
   @override
   _ProfileContentState createState() => _ProfileContentState();
 }
 
-class _ProfileContentState extends State<ProfileContent>
-    with SingleTickerProviderStateMixin {
+class _ProfileContentState extends State<ProfileContent> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late TimelineConfig<EducationModel> educationConfig;
   late TimelineConfig<ExperienceModel> experienceConfig;
@@ -80,16 +89,13 @@ class _ProfileContentState extends State<ProfileContent>
       lineThickness: 4,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       cardPadding: const EdgeInsets.all(16),
-      companyTextStyle:
-          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      positionTextStyle:
-          const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      companyTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      positionTextStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       descriptionTextStyle: const TextStyle(fontSize: 14),
       dateTextStyle: const TextStyle(fontSize: 12, color: Colors.grey),
       typeName: 'Education',
-      formBuilder: buildEducationForm,
-      customCardBuilder: (education) =>
-          EducationTile(education: education, config: educationConfig),
+      formBuilder: null,
+      customCardBuilder: (education) => EducationTile(education: education, config: educationConfig),
     );
 
     experienceConfig = TimelineConfig<ExperienceModel>(
@@ -100,16 +106,13 @@ class _ProfileContentState extends State<ProfileContent>
       lineThickness: 4,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       cardPadding: const EdgeInsets.all(16),
-      companyTextStyle:
-          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      positionTextStyle:
-          const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      companyTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      positionTextStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       descriptionTextStyle: const TextStyle(fontSize: 14),
       dateTextStyle: const TextStyle(fontSize: 12, color: Colors.grey),
       typeName: 'Experience',
-      formBuilder: buildExperienceForm,
-      customCardBuilder: (experience) =>
-          ExperienceTile(experience: experience, config: experienceConfig),
+      formBuilder: null,
+      customCardBuilder: (experience) => ExperienceTile(experience: experience, config: experienceConfig),
     );
   }
 
@@ -119,43 +122,9 @@ class _ProfileContentState extends State<ProfileContent>
     super.dispose();
   }
 
-  void _showImageSourceDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Profile Picture'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo),
-              title: const Text('Select from Gallery'),
-              onTap: () {
-                Navigator.pop(context);
-                context
-                    .read<ProfileCubit>()
-                    .updateAvatar(widget.userId, ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Take Picture'),
-              onTap: () {
-                Navigator.pop(context);
-                context
-                    .read<ProfileCubit>()
-                    .updateAvatar(widget.userId, ImageSource.camera);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
+  void _startChat(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Chat functionality not implemented yet')),
     );
   }
 
@@ -177,38 +146,16 @@ class _ProfileContentState extends State<ProfileContent>
                   bottom: 20,
                   left: 20,
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 50,
-                            backgroundImage: widget.user.avatarUrl != null
-                                ? NetworkImage(widget.user.avatarUrl!)
-                                : null,
-                            child: widget.user.avatarUrl == null
-                                ? const Icon(Icons.person, size: 50)
-                                : null,
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: GestureDetector(
-                              onTap: () => _showImageSourceDialog(context),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.blue,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      CircleAvatar(
+                        radius: 50,
+                        backgroundImage: widget.user.avatarUrl != null
+                            ? NetworkImage(widget.user.avatarUrl!)
+                            : null,
+                        child: widget.user.avatarUrl == null
+                            ? const Icon(Icons.person, size: 50)
+                            : null,
                       ),
                       const SizedBox(width: 16),
                       Column(
@@ -217,15 +164,51 @@ class _ProfileContentState extends State<ProfileContent>
                         children: [
                           Text(
                             widget.user.fullName,
-                            style: const TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                           ),
                           if (widget.user.headline != null)
-                            Text(widget.user.headline!,
-                                style: const TextStyle(fontSize: 16)),
+                            Text(widget.user.headline!, style: const TextStyle(fontSize: 16)),
                           if (widget.user.location != null)
-                            Text(widget.user.location!,
-                                style: const TextStyle(fontSize: 14)),
+                            Text(widget.user.location!, style: const TextStyle(fontSize: 14)),
+                          if (!widget.isOwnProfile) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    if (widget.connectionStatus == ConnectionStatus.accepted) {
+                                      context.read<ProfileCubit>().deleteConnection(widget.userId, widget.userId);
+                                    } else {
+                                      context.read<ProfileCubit>().createConnection(widget.userId, widget.userId);
+                                    }
+                                  },
+                                  icon: Icon(
+                                    widget.connectionStatus == ConnectionStatus.accepted
+                                        ? Icons.remove_circle
+                                        : Icons.add_circle,
+                                  ),
+                                  label: Text(
+                                    widget.connectionStatus == ConnectionStatus.accepted
+                                        ? 'Disconnect'
+                                        : widget.connectionStatus == ConnectionStatus.pending
+                                        ? 'Pending'
+                                        : 'Connect',
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: widget.connectionStatus == ConnectionStatus.pending
+                                        ? Colors.grey
+                                        : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  onPressed: () => _startChat(context),
+                                  icon: const Icon(Icons.message),
+                                  label: const Text('Message'),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -234,24 +217,7 @@ class _ProfileContentState extends State<ProfileContent>
               ],
             ),
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) {
-                    final settingsCubit =
-                        BlocProvider.of<SettingsCubit>(context);
-                    settingsCubit.loadSettings();
-                    return const AccountSettingsScreen();
-                  }),
-                ).then((_) {
-                  context.read<ProfileCubit>().fetchProfile(widget.user.id);
-                });
-              },
-            ),
-          ],
+          actions: const [],
         ),
         SliverToBoxAdapter(
           child: Padding(
@@ -261,8 +227,7 @@ class _ProfileContentState extends State<ProfileContent>
               children: [
                 if (widget.user.bio != null) ...[
                   const Text('About',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text(widget.user.bio!),
                   const SizedBox(height: 16),
@@ -275,7 +240,7 @@ class _ProfileContentState extends State<ProfileContent>
                     Tab(text: 'Experience'),
                     Tab(text: 'Education'),
                     Tab(text: 'Skills'),
-                    Tab(text: 'Resume')
+                    Tab(text: 'Resume'),
                   ],
                 ),
               ],
@@ -305,7 +270,7 @@ class _ProfileContentState extends State<ProfileContent>
                 userId: widget.userId,
               ),
               SkillsGrid(userId: widget.userId),
-              const ResumeTab()
+              ResumeTab(userId: widget.userId,),
             ],
           ),
         ),
@@ -328,7 +293,7 @@ class TimelineConfig<T> {
   final TextStyle dateTextStyle;
   final Widget Function(T)? customCardBuilder;
   final String Function(String)? dateFormatter;
-  final String typeName; // e.g., "Education" or "Experience"
+  final String typeName;
   final Widget Function(T?, Function(T))? formBuilder;
 
   TimelineConfig({

@@ -21,7 +21,7 @@ class JobModel {
     required this.creator,
     required this.description,
     required this.jdUrls,
-    required this.files,
+    this.files,
     required this.companyName,
     required this.location,
     required this.createdAt,
@@ -43,13 +43,15 @@ class JobModel {
       id: json['id'] as String,
       title: json['title'] as String,
       description: json['description'] as String,
-      jdUrls: List<String>.from(jsonDecode(json['jd_urls']) ??'[]'),
+      jdUrls: List<String>.from(jsonDecode(json['jd_urls'] ?? '[]')),
       files: null,
       companyName: json['company_name'] as String,
       location: json['location'] as String,
-      createdAt: DateTime.parse(json['created_at']), 
+      createdAt: DateTime.parse(json['created_at']),
       creator: json['creator'] as String,
-      userModel: UserModel.fromJson(json['user'] ?? {} as Map<String, dynamic>),
+      userModel: json['user'] != null
+          ? UserModel.fromJson(Map<String, dynamic>.from(json['user'] as Map))
+          : null,
     );
   }
 
@@ -58,11 +60,11 @@ class JobModel {
       'id': id,
       'title': title,
       'description': description,
-      'jdUrls': jdUrls,
-      'files': files,
-      'companyName': companyName,
+      'jd_urls': jsonEncode(jdUrls), // Encode list to JSON string
+      'company_name': companyName,
       'location': location,
-      'createdAt': createdAt.toIso8601String(),
+      'created_at': createdAt.toIso8601String(),
+      'creator': creator,
     };
   }
 }

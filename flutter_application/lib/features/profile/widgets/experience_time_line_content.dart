@@ -55,7 +55,7 @@ class ExperienceTile extends StatelessWidget {
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        width: double.infinity, // Ensure card content fills available width
+        width: double.infinity,
         padding: config.cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -9,33 +9,29 @@ import '../../../models/user_skill_model.dart';
 
 class SkillsState extends Equatable {
   final List<UserSkillModel> userSkills;
-  final String? selectedSkillId;
   final bool isLoading;
   final String? error;
 
   const SkillsState({
     this.userSkills = const [],
-    this.selectedSkillId,
     this.isLoading = false,
     this.error,
   });
 
   SkillsState copyWith({
     List<UserSkillModel>? userSkills,
-    String? selectedSkillId,
     bool? isLoading,
     String? error,
   }) {
     return SkillsState(
       userSkills: userSkills ?? this.userSkills,
-      selectedSkillId: selectedSkillId,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
     );
   }
 
   @override
-  List<Object?> get props => [userSkills, selectedSkillId, isLoading, error];
+  List<Object?> get props => [userSkills, isLoading, error];
 }
 
 class SkillsCubit extends Cubit<SkillsState> {
@@ -80,82 +76,6 @@ class SkillsCubit extends Cubit<SkillsState> {
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }
   }
-
-  Future<List<SkillModel>> fetchAvailableSkills() async {
-    try {
-      final response = await supabaseClient.from('skill').select();
-      return response.map((json) => SkillModel.fromJson(json)).toList();
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-      return [];
-    }
-  }
-
-  void selectSkillForDeletion(String skillId) {
-    emit(state.copyWith(selectedSkillId: skillId));
-  }
-
-  void clearSelection() {
-    emit(state.copyWith(selectedSkillId: null));
-  }
-
-  Future<void> addUserSkill(SkillModel skill, int level, double yearExp) async {
-    try {
-      final newUserSkill = UserSkillModel(
-        userId: userId,
-        skillId: skill.id,
-        level: level,
-        yearExp: yearExp,
-        skill: skill,
-      );
-      await supabaseClient.from('user_skill').insert({
-        'user_id': userId,
-        'skill_id': skill.id,
-        'level': level,
-        'year_exp': yearExp,
-      });
-      emit(state.copyWith(
-        userSkills: [...state.userSkills, newUserSkill],
-        selectedSkillId: null,
-      ));
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
-  }
-
-  Future<void> updateUserSkill(UserSkillModel userSkill) async {
-    try {
-      await supabaseClient
-          .from('user_skill')
-          .update({
-            'level': userSkill.level,
-            'year_exp': userSkill.yearExp,
-          })
-          .eq('user_id', userSkill.userId)
-          .eq('skill_id', userSkill.skillId);
-      final updatedSkills = state.userSkills.map((skill) {
-        return skill.skillId == userSkill.skillId ? userSkill : skill;
-      }).toList();
-      emit(state.copyWith(userSkills: updatedSkills, selectedSkillId: null));
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
-  }
-
-  Future<void> deleteUserSkill(String skillId) async {
-    try {
-      await supabaseClient
-          .from('user_skill')
-          .delete()
-          .eq('user_id', userId)
-          .eq('skill_id', skillId);
-      final updatedSkills =
-          state.userSkills.where((skill) => skill.skillId != skillId).toList();
-      emit(state.copyWith(userSkills: updatedSkills, selectedSkillId: null));
-    } catch (e) {
-      emit(state.copyWith(error: e.toString()));
-    }
-  }
 }
 
 class SkillsGrid extends StatelessWidget {
@@ -178,6 +98,18 @@ class SkillsGrid extends StatelessWidget {
           if (state.error != null) {
             return Center(child: Text('Error: ${state.error}'));
           }
+          if (state.userSkills.isEmpty) {
+            return const Center(
+              child: Text(
+                'No skills added yet.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+            );
+          }
 
           return GridView.builder(
             padding: const EdgeInsets.all(16),
@@ -186,13 +118,10 @@ class SkillsGrid extends StatelessWidget {
               mainAxisSpacing: 8,
               childAspectRatio: 0.8,
             ),
-            itemCount: state.userSkills.length + 1,
+            itemCount: state.userSkills.length,
             itemBuilder: (context, index) {
-              if (index == state.userSkills.length) {
-                return _buildAddSkillCard(context);
-              }
               final userSkill = state.userSkills[index];
-              return _buildSkillCard(context, userSkill, state);
+              return _buildSkillCard(context, userSkill);
             },
           );
         },
@@ -200,400 +129,103 @@ class SkillsGrid extends StatelessWidget {
     );
   }
 
-  Widget _buildSkillCard(
-      BuildContext context, UserSkillModel userSkill, SkillsState state) {
+  Widget _buildSkillCard(BuildContext context, UserSkillModel userSkill) {
     final cubit = context.read<SkillsCubit>();
-    final isSelected = state.selectedSkillId == userSkill.skillId;
 
-    return GestureDetector(
-      onTap: () => _showEditSkillDialog(context, userSkill),
-      onLongPress: () => cubit.selectSkillForDeletion(userSkill.skillId),
-      child: Card(
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [
-                Colors.blue.shade50,
-                Colors.white,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 16),
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ClipOval(
-                      child: CachedNetworkImage(
-                        imageUrl: cubit.getSkillImageUrl(userSkill.skill),
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2)),
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.error, size: 40),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      userSkill.skill.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.star, size: 16, color: Colors.amber),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Level: ${userSkill.level}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.timer,
-                            size: 16, color: Colors.black54),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Exp: ${cubit.formatYearExp(userSkill.yearExp)}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (isSelected)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red, size: 24),
-                    onPressed: () => _confirmDeleteSkill(context, userSkill),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddSkillCard(BuildContext context) {
     return Card(
-      elevation: 4,
+      elevation: 6,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
-        onTap: () => _showAddSkillDialog(context),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [
-                Colors.grey.shade100,
-                Colors.grey.shade50,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: [
+              Colors.blue.shade50,
+              Colors.white,
             ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey.shade200,
-                ),
-                child: const Icon(
-                  Icons.add,
-                  size: 32,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Add Skill',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
-      ),
-    );
-  }
-
-  void _showEditSkillDialog(BuildContext context, UserSkillModel userSkill) {
-    final cubit = context.read<SkillsCubit>();
-    final levelController =
-        TextEditingController(text: userSkill.level.toString());
-    final yearExpController =
-        TextEditingController(text: userSkill.yearExp.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Edit ${userSkill.skill.title}'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: levelController,
-                  decoration: const InputDecoration(
-                    labelText: 'Level',
-                    hintText: 'Enter skill level (e.g., 1-5)',
-                  ),
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: yearExpController,
-                  decoration: const InputDecoration(
-                    labelText: 'Years of Experience',
-                    hintText:
-                        'Enter as decimal (e.g., 2.5 for 2 years 6 months)',
-                  ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                final newLevel =
-                    int.tryParse(levelController.text) ?? userSkill.level;
-                final newYearExp = double.tryParse(yearExpController.text) ??
-                    userSkill.yearExp;
-                if (newLevel < 1 || newYearExp <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text(
-                            'Level must be at least 1 and experience must be greater than 0')),
-                  );
-                  return;
-                }
-                final updatedSkill = UserSkillModel(
-                  userId: userSkill.userId,
-                  skillId: userSkill.skillId,
-                  level: newLevel,
-                  yearExp: newYearExp,
-                  skill: userSkill.skill,
-                );
-                cubit.updateUserSkill(updatedSkill);
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showAddSkillDialog(BuildContext context) {
-    final cubit = context.read<SkillsCubit>();
-    SkillModel? selectedSkill;
-    final levelController = TextEditingController(text: '1');
-    final yearExpController = TextEditingController(text: '0.0');
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return FutureBuilder<List<SkillModel>>(
-          future: cubit.fetchAvailableSkills(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const AlertDialog(
-                content: Center(child: CircularProgressIndicator()),
-              );
-            }
-            if (snapshot.hasError || !snapshot.hasData) {
-              return AlertDialog(
-                title: const Text('Error'),
-                content: const Text('Failed to load skills'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('OK'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 16),
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
                   ),
                 ],
-              );
-            }
-
-            final availableSkills = snapshot.data!
-                .where((skill) =>
-                    !cubit.state.userSkills.any((us) => us.skillId == skill.id))
-                .toList();
-
-            return AlertDialog(
-              title: const Text('Add New Skill'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButton<SkillModel>(
-                      hint: const Text('Select Skill'),
-                      isExpanded: true,
-                      value: selectedSkill,
-                      items: availableSkills.map((skill) {
-                        return DropdownMenuItem<SkillModel>(
-                          value: skill,
-                          child: Text(skill.title),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        selectedSkill = value;
-                        (context as Element).markNeedsBuild();
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: levelController,
-                      decoration: const InputDecoration(
-                        labelText: 'Level',
-                        hintText: 'Enter skill level (e.g., 1-5)',
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: yearExpController,
-                      decoration: const InputDecoration(
-                        labelText: 'Years of Experience',
-                        hintText:
-                            'Enter as decimal (e.g., 2.5 for 2 years 6 months)',
-                      ),
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                    ),
-                  ],
+              ),
+              child: ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: cubit.getSkillImageUrl(userSkill.skill),
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2)),
+                  errorWidget: (context, url, error) =>
+                  const Icon(Icons.error, size: 40),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (selectedSkill == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please select a skill')),
-                      );
-                      return;
-                    }
-                    final level = int.tryParse(levelController.text) ?? 1;
-                    final yearExp =
-                        double.tryParse(yearExpController.text) ?? 0.0;
-                    if (level < 1 || yearExp <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Level must be at least 1 and experience must be greater than 0')),
-                      );
-                      return;
-                    }
-                    cubit.addUserSkill(selectedSkill!, level, yearExp);
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Add'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _confirmDeleteSkill(BuildContext context, UserSkillModel userSkill) {
-    final cubit = context.read<SkillsCubit>();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete Skill'),
-          content:
-              Text('Are you sure you want to delete ${userSkill.skill.title}?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
             ),
-            TextButton(
-              onPressed: () {
-                cubit.deleteUserSkill(userSkill.skillId);
-                Navigator.pop(context);
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                userSkill.skill.title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.star, size: 16, color: Colors.amber),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Level: ${userSkill.level}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.timer, size: 16, color: Colors.black54),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Exp: ${cubit.formatYearExp(userSkill.yearExp)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
-        );
-      },
+        ),
+      ),
     );
   }
 }
