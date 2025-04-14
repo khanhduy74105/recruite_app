@@ -4,11 +4,14 @@ import 'package:flutter_application/features/profile/widgets/resume_tab.dart';
 import 'package:flutter_application/features/profile/widgets/skill_grid.dart';
 import 'package:flutter_application/models/experience_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/education_model.dart';
 import '../../../models/user_models.dart';
 import '../../../models/user_connection.dart';
+import '../../setting/cubit/setting_cubit.dart';
+import '../../setting/page/account_setting_page.dart';
 import '../cubit/profile_cubit.dart';
 import '../widgets/education_timeline_content.dart';
 import '../widgets/experience_time_line_content.dart';
@@ -89,13 +92,17 @@ class _ProfileContentState extends State<ProfileContent> with SingleTickerProvid
       lineThickness: 4,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       cardPadding: const EdgeInsets.all(16),
-      companyTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      positionTextStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      companyTextStyle:
+          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      positionTextStyle:
+          const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       descriptionTextStyle: const TextStyle(fontSize: 14),
       dateTextStyle: const TextStyle(fontSize: 12, color: Colors.grey),
       typeName: 'Education',
-      formBuilder: null,
-      customCardBuilder: (education) => EducationTile(education: education, config: educationConfig),
+      formBuilder: widget.isOwnProfile ? buildEducationForm : null,
+      // Disable editing for others
+      customCardBuilder: (education) =>
+          EducationTile(education: education, config: educationConfig),
     );
 
     experienceConfig = TimelineConfig<ExperienceModel>(
@@ -106,13 +113,17 @@ class _ProfileContentState extends State<ProfileContent> with SingleTickerProvid
       lineThickness: 4,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       cardPadding: const EdgeInsets.all(16),
-      companyTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      positionTextStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      companyTextStyle:
+          const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      positionTextStyle:
+          const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       descriptionTextStyle: const TextStyle(fontSize: 14),
       dateTextStyle: const TextStyle(fontSize: 12, color: Colors.grey),
       typeName: 'Experience',
-      formBuilder: null,
-      customCardBuilder: (experience) => ExperienceTile(experience: experience, config: experienceConfig),
+      formBuilder: widget.isOwnProfile ? buildExperienceForm : null,
+      // Disable editing for others
+      customCardBuilder: (experience) =>
+          ExperienceTile(experience: experience, config: experienceConfig),
     );
   }
 
@@ -120,6 +131,46 @@ class _ProfileContentState extends State<ProfileContent> with SingleTickerProvid
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  void _showImageSourceDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Change Profile Picture'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo),
+              title: const Text('Select from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                context
+                    .read<ProfileCubit>()
+                    .updateAvatar(widget.userId, ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take Picture'),
+              onTap: () {
+                Navigator.pop(context);
+                context
+                    .read<ProfileCubit>()
+                    .updateAvatar(widget.userId, ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _startChat(BuildContext context) {
@@ -148,14 +199,38 @@ class _ProfileContentState extends State<ProfileContent> with SingleTickerProvid
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundImage: widget.user.avatarUrl != null
-                            ? NetworkImage(widget.user.avatarUrl!)
-                            : null,
-                        child: widget.user.avatarUrl == null
-                            ? const Icon(Icons.person, size: 50)
-                            : null,
+                      Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundImage: widget.user.avatarUrl != null
+                                ? NetworkImage(widget.user.avatarUrl!)
+                                : null,
+                            child: widget.user.avatarUrl == null
+                                ? const Icon(Icons.person, size: 50)
+                                : null,
+                          ),
+                          if (widget.isOwnProfile)
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: () => _showImageSourceDialog(context),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.blue,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       const SizedBox(width: 16),
                       Column(
@@ -217,7 +292,25 @@ class _ProfileContentState extends State<ProfileContent> with SingleTickerProvid
               ],
             ),
           ),
-          actions: const [],
+          actions: [
+            if (widget.isOwnProfile)
+              IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) {
+                      final settingsCubit =
+                          BlocProvider.of<SettingsCubit>(context);
+                      settingsCubit.loadSettings();
+                      return const AccountSettingsScreen();
+                    }),
+                  ).then((_) {
+                    context.read<ProfileCubit>().fetchProfile(widget.user.id);
+                  });
+                },
+              ),
+          ],
         ),
         SliverToBoxAdapter(
           child: Padding(

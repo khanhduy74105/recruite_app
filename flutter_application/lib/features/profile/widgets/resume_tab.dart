@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -8,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/services/supabase_service.dart';
 import '../../../models/resume_model.dart';
 
 class ResumeState {
@@ -45,6 +48,7 @@ class ResumeCubit extends Cubit<ResumeState> {
   Future<void> fetchResume() async {
     try {
       emit(state.copyWith(isLoading: true));
+
       final response = await supabase
           .from('resume')
           .select()
@@ -61,6 +65,72 @@ class ResumeCubit extends Cubit<ResumeState> {
       emit(state.copyWith(
         isLoading: false,
         error: 'Failed to fetch resume: $e',
+      ));
+    }
+  }
+
+  Future<void> uploadResume(File file) async {
+    try {
+      emit(state.copyWith(isLoading: true));
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) {
+        emit(state.copyWith(
+          isLoading: false,
+          error: 'User not authenticated',
+        ));
+        return;
+      }
+
+      final existingResume = await supabase
+          .from('resume')
+          .select()
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      if (existingResume != null) {
+        final oldResume = ResumeModel.fromJson(existingResume);
+        final oldFilePath = oldResume.url.split('/').last;
+        await supabase.storage.from('resumes').remove([oldFilePath]);
+        await supabase.from('resume').delete().eq('user_id', userId);
+      }
+
+      final fileName = '${userId}_${const Uuid().v4()}.pdf';
+      final uploadResponse = await supabase.storage.from('resumes').upload(
+            fileName,
+            file,
+            fileOptions: const FileOptions(contentType: 'application/pdf'),
+          );
+
+      if (uploadResponse.isEmpty) {
+        emit(state.copyWith(
+          isLoading: false,
+          error: 'Failed to upload resume',
+        ));
+        return;
+      }
+
+      final publicUrl = supabase.storage.from('resumes').getPublicUrl(fileName);
+
+      final newResume = ResumeModel(
+        id: const Uuid().v4(),
+        url: publicUrl,
+      );
+
+      await supabase.from('resume').insert({
+        'id': newResume.id,
+        'user_id': userId,
+        'url': newResume.url,
+      });
+
+      emit(state.copyWith(
+        resume: newResume,
+        isLoading: false,
+        error: null,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        error: 'Failed to upload resume: $e',
       ));
     }
   }
@@ -134,6 +204,46 @@ class _ResumeTabState extends State<ResumeTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (widget.userId == SupabaseService.getCurrentUserId())
+                  ElevatedButton(
+                    onPressed: state.isLoading
+                        ? null
+                        : () async {
+                      FilePickerResult? result =
+                      await FilePicker.platform.pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: ['pdf'],
+                      );
+
+                      if (result != null) {
+                        if (kIsWeb) {
+                          final bytes = result.files.single.bytes;
+                          if (bytes != null) {
+                            final tempFile = File('temp.pdf')
+                              ..writeAsBytesSync(bytes);
+                            context
+                                .read<ResumeCubit>()
+                                .uploadResume(tempFile);
+                          }
+                        } else {
+                          if (result.files.single.path != null) {
+                            final file = File(result.files.single.path!);
+                            context.read<ResumeCubit>().uploadResume(file);
+                          }
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                    ),
+                    child: state.isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text('Upload CV (PDF)'),
+                  ),
+                const SizedBox(height: 16),
                 if (state.error != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),

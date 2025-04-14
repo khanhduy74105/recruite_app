@@ -47,15 +47,17 @@ class EducationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formattedStartDate = TimelineUtils.formatDate(education.startDate, config.dateFormatter);
-    final formattedEndDate = TimelineUtils.formatDate(education.endDate, config.dateFormatter);
+    final formattedStartDate =
+        TimelineUtils.formatDate(education.startDate, config.dateFormatter);
+    final formattedEndDate =
+        TimelineUtils.formatDate(education.endDate, config.dateFormatter);
 
     return Card(
       elevation: 4,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        width: double.infinity,
+        width: double.infinity, // Ensure card content fills available width
         padding: config.cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
