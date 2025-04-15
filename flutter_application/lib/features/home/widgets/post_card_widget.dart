@@ -13,6 +13,8 @@ import 'package:flutter_application/models/comment_model.dart';
 import 'package:flutter_application/models/post_model.dart';
 import 'package:flutter_application/models/user_models.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../profile/pages/profile.dart';
 import 'comment_card_widget.dart';
 
 class PostCardWidget extends StatefulWidget {
@@ -76,7 +78,10 @@ class PostAction extends StatelessWidget {
             context.read<HomeCubit>().updatePost(
                 postModel.copyWith(
                   likes: likes,
-                ),null, null, postModel.job);
+                ),
+                null,
+                null,
+                postModel.job);
           },
           icon: Icon(
             postModel.likes.contains(userId)
@@ -132,6 +137,7 @@ class PostContent extends StatelessWidget {
 
   final PostModel postModel;
   final bool isExpandedComments;
+
   @override
   Widget build(BuildContext context) {
     List<String> imageLinks = postModel.imageLinks
@@ -184,9 +190,15 @@ class PostUserHeader extends StatelessWidget {
       contentPadding: const EdgeInsets.only(left: 16),
       leading: UserAvatar(
         imagePath: user.avatarUrl,
-        onTap: () {},
+        onTap: () {
+          goProfile(context, user);
+        },
       ),
-      title: Text(user.fullName),
+      title: GestureDetector(
+        onTap: () {
+          goProfile(context, user);
+        },
+          child: Text(user.fullName)),
       subtitle: Row(
         children: [
           Text(user.role != null ? user.role!.name : 'user'),
@@ -217,7 +229,7 @@ class PostUserHeader extends StatelessWidget {
                 return ListTile(
                   title: const Text("Edit"),
                   onTap: () async {
-                     await Navigator.push(
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) => CreatePostScreen(
@@ -232,6 +244,16 @@ class PostUserHeader extends StatelessWidget {
           ]);
         },
       ),
+    );
+  }
+
+  void goProfile(BuildContext context, UserModel user) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => ProfilePage(
+                userId: user.id,
+              )),
     );
   }
 }

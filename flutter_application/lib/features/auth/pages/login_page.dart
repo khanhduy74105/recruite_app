@@ -5,6 +5,8 @@ import 'package:flutter_application/features/auth/pages/signup_page.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../setting/cubit/setting_cubit.dart';
+
 class LoginPage extends StatefulWidget {
   static MaterialPageRoute route() => MaterialPageRoute(
         builder: (context) => const LoginPage(),
