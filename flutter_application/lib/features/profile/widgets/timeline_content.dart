@@ -70,7 +70,7 @@ class _TimelineContentState<T extends TimelineItem> extends State<TimelineConten
 
   @override
   Widget build(BuildContext context) {
-    if (_items.isEmpty) {
+    if (_items.isEmpty && widget.userId != SupabaseService.getCurrentUserId()) {
       return Center(
         child: Text(
           'No ${widget.config.typeName.toLowerCase()} added yet.',
@@ -85,7 +85,9 @@ class _TimelineContentState<T extends TimelineItem> extends State<TimelineConten
 
     return ListView.builder(
       padding: const EdgeInsets.all(16.0),
-      itemCount: _items.length + 1,
+      itemCount: widget.userId == SupabaseService.getCurrentUserId()
+          ? _items.length + 1
+          : _items.length,
       itemBuilder: (context, index) {
         if (index == _items.length && widget.userId == SupabaseService.getCurrentUserId()) {
           return TimelineTile(
@@ -126,7 +128,7 @@ class _TimelineContentState<T extends TimelineItem> extends State<TimelineConten
         return TimelineTileWidget(
           item: item,
           isFirst: index == 0,
-          isLast: false,
+          isLast: !(widget.userId == SupabaseService.getCurrentUserId()) && index == _items.length - 1,
           config: widget.config,
           onEdit: _addOrUpdateItem,
           onDelete: _deleteItem,

@@ -179,7 +179,7 @@ class SkillsGrid extends StatelessWidget {
           if (state.error != null) {
             return Center(child: Text('Error: ${state.error}'));
           }
-          if (state.userSkills.isEmpty) {
+          if (state.userSkills.isEmpty && userId != SupabaseService.getCurrentUserId()) {
             return const Center(
               child: Text(
                 'No skills added yet.',
@@ -199,7 +199,9 @@ class SkillsGrid extends StatelessWidget {
               mainAxisSpacing: 8,
               childAspectRatio: 0.8,
             ),
-            itemCount: state.userSkills.length + 1,
+            itemCount: userId == SupabaseService.getCurrentUserId()
+                ? state.userSkills.length + 1
+                : state.userSkills.length,
             itemBuilder: (context, index) {
               if (index == state.userSkills.length &&
                   userId == SupabaseService.getCurrentUserId()) {
