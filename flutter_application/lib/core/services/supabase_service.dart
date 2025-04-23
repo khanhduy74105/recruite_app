@@ -11,7 +11,7 @@ class SupabaseService {
   }
 
   static SupabaseStorageClient get storage => Supabase.instance.client.storage;
-  static Future<List<String>> upload(List<File> files) async {
+  static Future<List<String>> upload(List<File> files, {String? bucket}) async {
     try {
       List<String> urls = [];
       for (File file in files) {
@@ -19,7 +19,7 @@ class SupabaseService {
         String fileName =
             '${DateTime.now().millisecondsSinceEpoch}_${file.hashCode}.$fileExtension';
         Uint8List fileBytes = await file.readAsBytes();
-        await Supabase.instance.client.storage.from(bucketName).uploadBinary(
+        await Supabase.instance.client.storage.from(bucket ?? bucketName).uploadBinary(
               fileName,
               fileBytes,
               fileOptions: FileOptions(contentType: 'image/$fileExtension'),
@@ -27,8 +27,8 @@ class SupabaseService {
         urls.add(fileName);
       }
       return urls;
-    } catch (e) {
-      print('Error uploading files: $e');
+    } catch (e, s) {
+      print('Error uploading files: $e $s');
       return [];
     }
   }
@@ -41,10 +41,10 @@ class SupabaseService {
     }
   }
 
-  static String getUrl(String fileName) {
+  static String getUrl(String fileName, {String? bucket}) {
     try {
       final String url = Supabase.instance.client.storage
-          .from(bucketName)
+          .from(bucket ?? bucketName)
           .getPublicUrl(fileName);
       return url;
     } catch (e) {

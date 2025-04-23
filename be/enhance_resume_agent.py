@@ -49,46 +49,46 @@ class EnhancedRankingAgent:
         output_dict = json.loads(json_data)
         return output_dict
     
-extractedText = ResumeExtractor().extract_resume_text(r"D:\Projects\mobiles\recruite_app\be\CV-Frontend-Intern-NguyenThaiKhanhDuy.pdf")
-print(extractedText)
+# extractedText = ResumeExtractor().extract_resume_text(r"D:\Projects\mobiles\recruite_app\be\CV-Frontend-Intern-NguyenThaiKhanhDuy.pdf")
+# print(extractedText)
 
-print("========================================")
-print(GenAgent().generate_content(extractedText))
+# print("========================================")
+# print(GenAgent().generate_content(extractedText))
 
-job_desc = {
-    "job_title": "Frontend Developer",
-    "requirements": [
-        "Proficient in ReactJS and TypeScript",
-        "Minimum 1 year experience",
-        "Good English communication skills"
-    ],
-    "required_skills": ['HTML', 'CSS', 'Javascript', 'TypeScript', 'ReactJs', 'TailwindCSS', 'MySQL', 'MongoDB', 'NodeJS', 'ExpressJS', 'OOP', 'English communication', 'Teamwork', 'Presentation', "AWS"],
-    "min_experience": 1,
-    "education_fields": ["software engineer", "computer science"]
-}
+# job_desc = {
+#     "job_title": "Frontend Developer",
+#     "requirements": [
+#         "Proficient in ReactJS and TypeScript",
+#         "Minimum 1 year experience",
+#         "Good English communication skills"
+#     ],
+#     "required_skills": ['HTML', 'CSS', 'Javascript', 'TypeScript', 'ReactJs', 'TailwindCSS', 'MySQL', 'MongoDB', 'NodeJS', 'ExpressJS', 'OOP', 'English communication', 'Teamwork', 'Presentation', "AWS"],
+#     "min_experience": 1,
+#     "education_fields": ["software engineer", "computer science"]
+# }
 
-resume_Data =  {
-        'applicant_name': 'NGUYỄN THÁI KHÁNH DUY 3',
-        'institution': 'Vietnam -Korea university of information and communication technology',
-        'skills': ['HTML', 'TypeScript', 'ReactJs', 'TailwindCSS', 'MySQL', 'MongoDB', 'NodeJS', 'ExpressJS', 'OOP', 'English communication', 'Teamwork', 'Presentation'],
-        'experiences': [{'duration': '10 - 12/2022'}, {'duration': '1-2/2023'}]
-    }
+# resume_Data =  {
+#         'applicant_name': 'NGUYỄN THÁI KHÁNH DUY 3',
+#         'institution': 'Vietnam -Korea university of information and communication technology',
+#         'skills': ['HTML', 'TypeScript', 'ReactJs', 'TailwindCSS', 'MySQL', 'MongoDB', 'NodeJS', 'ExpressJS', 'OOP', 'English communication', 'Teamwork', 'Presentation'],
+#         'experiences': [{'duration': '10 - 12/2022'}, {'duration': '1-2/2023'}]
+#     }
 
-current_info = {
-    'applicant_name': 'NGUYỄN THÁI KHÁNH DUY 3',
-    'highest_level_of_education': 'University',
-    'area_of_study': 'Software Engineer',
-    'institution': 'Vietnam -Korea university of information and communication technology',
-    'skills': ['HTML', 'CSS', 'Javascript', 'TypeScript', 'ReactJs', 'TailwindCSS', 'MySQL', 'MongoDB', 'NodeJS', 'ExpressJS', 'OOP', 'English communication', 'Teamwork', 'Presentation'],
-}
+# current_info = {
+#     'applicant_name': 'NGUYỄN THÁI KHÁNH DUY 3',
+#     'highest_level_of_education': 'University',
+#     'area_of_study': 'Software Engineer',
+#     'institution': 'Vietnam -Korea university of information and communication technology',
+#     'skills': ['HTML', 'CSS', 'Javascript', 'TypeScript', 'ReactJs', 'TailwindCSS', 'MySQL', 'MongoDB', 'NodeJS', 'ExpressJS', 'OOP', 'English communication', 'Teamwork', 'Presentation'],
+# }
 
-weights = {
-    'tfidf_score': 0.1,
-    'semantic_score': 0.2,
-    'skill_match': 0.45,
-    'experience_match': 0.15,
-    'education_match': 0.1
-}
+# weights = {
+#     'tfidf_score': 0.1,
+#     'semantic_score': 0.2,
+#     'skill_match': 0.45,
+#     'experience_match': 0.15,
+#     'education_match': 0.1
+# }
 
-print("========================================")
-print(EnhancedRankingAgent().generate_content(job_desc, resume_Data, current_info, weights))
+# print("========================================")
+# print(EnhancedRankingAgent().generate_content(job_desc, resume_Data, current_info, weights))

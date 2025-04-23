@@ -59,6 +59,7 @@ dependencies:
   http: ^1.2.1
   flutter_datetime_picker: ^1.5.1
   flutter_slidable: ^3.1.2
+  percent_indicator: ^4.2.5
 
 dev_dependencies:
   flutter_test:
