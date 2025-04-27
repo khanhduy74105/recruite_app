@@ -20,6 +20,9 @@ class JobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
+        if (onClose != null) {
+          return;
+        }
         Navigator.push(
           context,
           MaterialPageRoute(

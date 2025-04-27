@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_application/core/services/supabase_service.dart';
 import 'package:flutter_application/models/job_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -7,10 +8,17 @@ class JobRepository {
 
   Future<JobModel> createJob(JobModel jobModel) async {
     try {
+      List<String> urls = jobModel.jdUrls;
+      if (jobModel.files != null && jobModel.files!.isNotEmpty) {
+        urls = await SupabaseService.upload(jobModel.files!, bucket: 'jd');
+        print('Uploaded files: ${jobModel.files?.length} ${jobModel.jdUrls} | $urls');
+      }
+      print('files: ${jobModel.files}');
+
       final respones = await supabase.from('job').insert({
         'title': jobModel.title,
         'description': jobModel.description,
-        'jd_urls': jsonEncode(jobModel.jdUrls),
+        'jd_urls': jsonEncode(urls),
         'company_name': jobModel.companyName,
         'location': jobModel.location,
       }).select();

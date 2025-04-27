@@ -237,8 +237,8 @@ class CreatePostScreenState extends State<CreatePostScreen> {
                     ),
                   ),
                   if (jobModel != null)
-                    InkWell(
-                      onTap: () {
+                    GestureDetector(
+                      onLongPress: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) =>

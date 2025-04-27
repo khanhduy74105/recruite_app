@@ -1,3 +1,5 @@
+import 'package:flutter_application/models/user_models.dart';
+
 enum ApplicationStatus {
   applied,
   rejected,
@@ -9,10 +11,12 @@ class JobApplicationModel {
   final String id;
   final String userId;
   final String jobId;
+  final UserModel? user; // Added user field
   final ApplicationStatus status; // Changed from String to ApplicationStatus
   final DateTime appliedAt;
 
-  JobApplicationModel({
+  JobApplicationModel( {
+    this.user,
     required this.id,
     required this.userId,
     required this.jobId,
@@ -24,6 +28,7 @@ class JobApplicationModel {
   factory JobApplicationModel.fromJson(Map<String, dynamic> json) {
     return JobApplicationModel(
       id: json['id'],
+      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
       userId: json['user_id'],
       jobId: json['job_id'],
       status: _parseStatus(json['status']), // Convert string to enum
@@ -36,6 +41,7 @@ class JobApplicationModel {
     return {
       'id': id,
       'user_id': userId,
+      'user': user?.toJson(), // Convert user to JSON if not null
       'job_id': jobId,
       'status': status.name, // Convert enum to string
       'applied_at': appliedAt.toIso8601String(),
@@ -68,6 +74,7 @@ class JobApplicationModel {
   }) {
     return JobApplicationModel(
       id: id ?? this.id,
+      user: user ?? this.user,
       userId: userId ?? this.userId,
       jobId: jobId ?? this.jobId,
       status: status ?? this.status,
