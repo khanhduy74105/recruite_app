@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/core/services/supabase_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart'; // Add this to pubspec.yaml if not already added
+import 'package:intl/intl.dart';
 
 import '../cubit/chat_box_cubit.dart';
 import '../cubit/message_common_state.dart';
@@ -42,7 +42,7 @@ class _ChatBoxPageState extends State<ChatBoxPage> {
       context.read<ChatBoxCubit>().sendMessage(widget.userId, content);
       _controller.clear();
     }
-    _focusNode.requestFocus(); // Keep keyboard open after sending
+    _focusNode.requestFocus();
   }
 
   void _scrollToBottom() {
@@ -60,13 +60,10 @@ class _ChatBoxPageState extends State<ChatBoxPage> {
     if (timestamp.year == now.year &&
         timestamp.month == now.month &&
         timestamp.day == now.day) {
-      // Today, just show time
       return DateFormat('HH:mm').format(timestamp);
     } else if (timestamp.year == now.year) {
-      // This year, show day/month and time
       return DateFormat('dd MMM, HH:mm').format(timestamp);
     } else {
-      // Different year, show full date
       return DateFormat('dd MMM yyyy, HH:mm').format(timestamp);
     }
   }
@@ -123,12 +120,10 @@ class _ChatBoxPageState extends State<ChatBoxPage> {
       ),
       body: Column(
         children: [
-          // Messages
           Expanded(
             child: BlocConsumer<ChatBoxCubit, MessageCommonState>(
               listener: (context, state) {
                 if (state is ChatBoxOpened && state.userId == widget.userId) {
-                  // Wait for rendering to complete before scrolling
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _scrollToBottom();
                   });
@@ -149,7 +144,6 @@ class _ChatBoxPageState extends State<ChatBoxPage> {
                       final isByMe = message.senderId ==
                           SupabaseService.getCurrentUserId();
 
-                      // Use the correct field from your MessageModel
                       final timestamp = _formatTimestamp(message.sentAt);
 
                       return _ChattingTile(

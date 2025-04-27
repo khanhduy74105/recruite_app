@@ -6,6 +6,65 @@ import '../../../models/user_models.dart';
 class MessageRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  Future<List<ConversationModel>> getChats() async {
+    final currentUserId = _supabase.auth.currentUser?.id;
+    if (currentUserId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    final response = await _supabase
+        .from('message')
+        .select()
+        .or('sender_id.eq.$currentUserId,receiver_id.eq.$currentUserId');
+
+    final messages = response.map((json) => MessageModel.fromJson(json)).toList();
+
+    final Set<String> chatUserIds = {};
+    for (final message in messages) {
+      if (message.senderId == currentUserId) {
+        chatUserIds.add(message.receiverId);
+      } else if (message.receiverId == currentUserId) {
+        chatUserIds.add(message.senderId);
+      }
+    }
+
+    final Map<String, ConversationModel> conversationsMap = {};
+
+    for (final userId in chatUserIds) {
+      final userResponse = await _supabase
+          .from('user')
+          .select()
+          .eq('id', userId)
+          .single();
+
+      final user = UserModel.fromJson(userResponse);
+
+      final userMessages = messages.where((m) =>
+      (m.senderId == currentUserId && m.receiverId == userId) ||
+          (m.senderId == userId && m.receiverId == currentUserId)
+      ).toList();
+
+      userMessages.sort((a, b) => b.sentAt.compareTo(a.sentAt));
+
+      final lastMessage = userMessages.isNotEmpty ? userMessages.first : null;
+      final unreadCount = userMessages
+          .where((m) => m.receiverId == currentUserId && !m.isRead)
+          .length;
+
+      conversationsMap[userId] = ConversationModel(
+        userId: userId,
+        name: user.fullName,
+        avatarUrl: user.avatarUrl,
+        lastMessage: lastMessage?.content,
+        lastMessageTime: lastMessage?.sentAt,
+        hasUnreadMessages: unreadCount > 0,
+        unreadMessagesCount: unreadCount,
+      );
+    }
+
+    return conversationsMap.values.toList();
+  }
+
   Future<List<UserModel>> getUsers() async {
     final currentUserId = _supabase.auth.currentUser?.id;
     if (currentUserId == null) {
@@ -25,7 +84,6 @@ class MessageRepository {
     return users;
   }
 
-  // Lấy tin nhắn cho một người dùng cụ thể
   Future<List<MessageModel>> getMessagesForUser(String userId) async {
     final currentUserId = _supabase.auth.currentUser?.id;
     if (currentUserId == null) {
@@ -42,37 +100,6 @@ class MessageRepository {
     return response.map((json) => MessageModel.fromJson(json)).toList();
   }
 
-  // Lấy danh sách cuộc trò chuyện
-  Future<List<ConversationModel>> getChats() async {
-    final users = await getUsers();
-    final currentUserId = _supabase.auth.currentUser?.id;
-    if (currentUserId == null) {
-      throw Exception('User not authenticated');
-    }
-
-    final List<ConversationModel> chats = [];
-    for (final user in users) {
-      final messages = await getMessagesForUser(user.id);
-      final lastMessage = messages.isNotEmpty ? messages.last : null;
-      final unreadCount = messages
-          .where((m) => m.receiverId == currentUserId && !m.isRead)
-          .length;
-
-      chats.add(ConversationModel(
-        userId: user.id,
-        name: user.fullName,
-        avatarUrl: user.avatarUrl,
-        lastMessage: lastMessage?.content,
-        lastMessageTime: lastMessage?.sentAt,
-        hasUnreadMessages: unreadCount > 0,
-        unreadMessagesCount: unreadCount,
-      ));
-    }
-
-    return chats;
-  }
-
-  // Gửi tin nhắn mới
   Future<void> sendMessage(String receiverId, String content) async {
     final currentUserId = _supabase.auth.currentUser?.id;
     if (currentUserId == null) {
@@ -84,10 +111,10 @@ class MessageRepository {
       'receiver_id': receiverId,
       'content': content,
       'sent_at': DateTime.now().toIso8601String(),
+      'is_read': false,
     });
   }
 
-  // Đánh dấu tin nhắn là đã đọc
   Future<void> markMessagesAsRead(String userId) async {
     final currentUserId = _supabase.auth.currentUser?.id;
     if (currentUserId == null) {
@@ -101,8 +128,8 @@ class MessageRepository {
         .eq('sender_id', userId)
         .eq('is_read', false);
   }
-  // Trong MessageRepository
-  void subscribeToMessages(String userId, Function(MessageModel) onNewMessage) {
+
+  void subscribeToMessages(String userId, Function(MessageModel) onMessageUpdate) {
     final currentUserId = _supabase.auth.currentUser?.id;
     if (currentUserId == null) return;
 
@@ -114,7 +141,7 @@ class MessageRepository {
         final message = MessageModel.fromJson(json);
         if ((message.senderId == userId && message.receiverId == currentUserId) ||
             (message.senderId == currentUserId && message.receiverId == userId)) {
-          onNewMessage(message);
+          onMessageUpdate(message);
         }
       }
     });

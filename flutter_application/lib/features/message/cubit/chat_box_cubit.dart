@@ -16,12 +16,14 @@ class ChatBoxCubit extends Cubit<MessageCommonState> {
   Future<void> openChatBox(String userId) async {
     try {
       emit(MessageLoading());
+
+      await messageRepository.markMessagesAsRead(userId);
+
       final messages = await messageRepository.getMessagesForUser(userId);
 
       existingMessageIds.clear();
       existingMessageIds.addAll(messages.map((m) => m.id));
 
-      await messageRepository.markMessagesAsRead(userId);
       emit(ChatBoxOpened(userId: userId, messages: messages));
       subscribeToMessages(userId);
     } catch (e) {
@@ -46,15 +48,20 @@ class ChatBoxCubit extends Cubit<MessageCommonState> {
   }
 
   void subscribeToMessages(String userId) {
-    messageRepository.subscribeToMessages(userId, (newMessage) {
+    messageRepository.subscribeToMessages(userId, (message) {
       if (state is ChatBoxOpened && (state as ChatBoxOpened).userId == userId) {
-        if (!existingMessageIds.contains(newMessage.id)) {
-          existingMessageIds.add(newMessage.id);
-          final currentState = state as ChatBoxOpened;
-          final updatedMessages = List<MessageModel>.from(currentState.messages)
-            ..add(newMessage);
-          emit(ChatBoxOpened(userId: userId, messages: updatedMessages));
+        final currentState = state as ChatBoxOpened;
+        final updatedMessages = List<MessageModel>.from(currentState.messages);
+
+        final existingMessageIndex = updatedMessages.indexWhere((m) => m.id == message.id);
+        if (existingMessageIndex != -1) {
+          updatedMessages[existingMessageIndex] = message;
+        } else if (!existingMessageIds.contains(message.id)) {
+          existingMessageIds.add(message.id);
+          updatedMessages.add(message);
         }
+
+        emit(ChatBoxOpened(userId: userId, messages: updatedMessages));
       }
     });
   }

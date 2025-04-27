@@ -20,14 +20,4 @@ class MessageCubit extends Cubit<MessageCommonState> {
       emit(MessageError(message: 'Failed to load chats: $e'));
     }
   }
-
-  Future<void> loadConnectedUsers() async {
-    try {
-      emit(MessageLoading());
-      final users = await messageRepository.getUsers();
-      emit(ConnectedUsersLoaded(users: users));
-    } catch (e) {
-      emit(MessageError(message: 'Failed to load connected users: $e'));
-    }
-  }
 }

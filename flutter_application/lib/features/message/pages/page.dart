@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application/features/message/cubit/message_cubit.dart';
+import 'package:flutter_application/features/message/cubit/new_chat_common_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../cubit/message_common_state.dart';
+import '../cubit/message_cubit.dart' as message_cubit;
+import '../cubit/message_cubit.dart';
+import '../cubit/new_chat_cubit.dart' as new_chat_cubit;
 import 'chat_box_page.dart';
 
 class MessagePage extends StatefulWidget {
@@ -19,7 +22,7 @@ class _MessagePageState extends State<MessagePage> {
   @override
   void initState() {
     super.initState();
-    context.read<MessageCubit>().loadChats();
+    context.read<message_cubit.MessageCubit>().loadChats();
   }
 
   void _showNewChatBottomSheet(BuildContext context) {
@@ -31,14 +34,17 @@ class _MessagePageState extends State<MessagePage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.8,
-          minChildSize: 0.5,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (context, scrollController) {
-            return _NewChatBottomSheet(scrollController: scrollController);
-          },
+        return BlocProvider(
+          create: (context) => new_chat_cubit.NewChatCubit(),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.8,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            expand: false,
+            builder: (context, scrollController) {
+              return _NewChatBottomSheet(scrollController: scrollController);
+            },
+          ),
         );
       },
     );
@@ -51,7 +57,6 @@ class _MessagePageState extends State<MessagePage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
@@ -60,8 +65,8 @@ class _MessagePageState extends State<MessagePage> {
                     "Messages",
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 25,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const Spacer(),
@@ -72,6 +77,13 @@ class _MessagePageState extends State<MessagePage> {
                       decoration: BoxDecoration(
                         color: const Color(0xff444446),
                         borderRadius: BorderRadius.circular(12),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: const Icon(Icons.add, color: Colors.white),
                     ),
@@ -79,7 +91,6 @@ class _MessagePageState extends State<MessagePage> {
                 ],
               ),
             ),
-            // Search Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: TextField(
@@ -87,13 +98,15 @@ class _MessagePageState extends State<MessagePage> {
                   hintText: 'Search User...',
                   hintStyle: const TextStyle(color: Colors.white70),
                   prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                  filled: true,
+                  fillColor: const Color(0xff2a2a2c),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.white70),
+                    borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Colors.white70),
+                    borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -108,12 +121,18 @@ class _MessagePageState extends State<MessagePage> {
                 },
               ),
             ),
-            // Chat List
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 decoration: const BoxDecoration(
-                  color: Colors.white,
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0xfff5f5f5),
+                      Color(0xffffffff),
+                    ],
+                  ),
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
@@ -122,33 +141,33 @@ class _MessagePageState extends State<MessagePage> {
                 child: Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 30),
+                      padding: const EdgeInsets.only(top: 30, bottom: 10),
                       child: Row(
                         children: const [
                           Text(
                             "Recent",
                             style: TextStyle(
-                              color: Colors.black45,
+                              color: Colors.black54,
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Spacer(),
-                          Icon(Icons.more_vert, color: Colors.black45),
+                          Icon(Icons.more_vert, color: Colors.black54),
                         ],
                       ),
                     ),
                     Expanded(
-                      child: BlocBuilder<MessageCubit, MessageCommonState>(
+                      child: BlocBuilder<message_cubit.MessageCubit, MessageCommonState>(
                         builder: (context, state) {
                           if (state is MessageLoading) {
                             return const Center(
                                 child: CircularProgressIndicator());
-                          } else if (state is ChatListLoaded) {
+                          } else if (state is message_cubit.ChatListLoaded) {
                             final filteredChats = state.chats
                                 .where((chat) => chat.name
-                                    .toLowerCase()
-                                    .contains(searchQuery.toLowerCase()))
+                                .toLowerCase()
+                                .contains(searchQuery.toLowerCase()))
                                 .toList();
                             if (filteredChats.isEmpty) {
                               return const Center(
@@ -162,14 +181,13 @@ class _MessagePageState extends State<MessagePage> {
                                   userId: chat.userId,
                                   name: chat.name,
                                   lastMessage:
-                                      chat.lastMessage ?? 'No messages',
+                                  chat.lastMessage ?? 'No messages',
                                   lastSeenTime:
-                                      _formatTime(chat.lastMessageTime),
+                                  _formatTime(chat.lastMessageTime),
                                   hasUnreadMessages: chat.hasUnreadMessages,
                                   unreadMessages: chat.unreadMessagesCount,
                                   avatarUrl: chat.avatarUrl,
                                   onDelete: () {
-                                    // Implement delete logic if needed
                                   },
                                 );
                               },
@@ -213,7 +231,7 @@ class _NewChatBottomSheetState extends State<_NewChatBottomSheet> {
   @override
   void initState() {
     super.initState();
-    context.read<MessageCubit>().loadConnectedUsers();
+    context.read<new_chat_cubit.NewChatCubit>().loadConnectedUsers();
   }
 
   @override
@@ -223,7 +241,6 @@ class _NewChatBottomSheetState extends State<_NewChatBottomSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Center(
             child: Container(
               width: 40,
@@ -244,19 +261,20 @@ class _NewChatBottomSheetState extends State<_NewChatBottomSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          // Search Bar
           TextField(
             decoration: InputDecoration(
               hintText: 'Search Friends...',
               hintStyle: const TextStyle(color: Colors.white70),
               prefixIcon: const Icon(Icons.search, color: Colors.white70),
+              filled: true,
+              fillColor: const Color(0xff2a2a2c),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.white70),
+                borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.white70),
+                borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -271,15 +289,16 @@ class _NewChatBottomSheetState extends State<_NewChatBottomSheet> {
             },
           ),
           const SizedBox(height: 16),
-          // Friends List
           Expanded(
-            child: BlocBuilder<MessageCubit, MessageCommonState>(
+            child: BlocBuilder<new_chat_cubit.NewChatCubit, NewChatCommonState>(
               builder: (context, state) {
-                if (state is ConnectedUsersLoaded) {
+                if (state is NewChatLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (state is new_chat_cubit.ConnectedUsersLoaded) {
                   final filteredUsers = state.users
                       .where((user) => user.fullName
-                          .toLowerCase()
-                          .contains(searchQuery.toLowerCase()))
+                      .toLowerCase()
+                      .contains(searchQuery.toLowerCase()))
                       .toList();
                   if (filteredUsers.isEmpty) {
                     return const Center(
@@ -314,7 +333,7 @@ class _NewChatBottomSheetState extends State<_NewChatBottomSheet> {
                           style: const TextStyle(color: Colors.white70),
                         ),
                         onTap: () {
-                          Navigator.pop(context); // Close bottom sheet
+                          Navigator.pop(context);
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -328,9 +347,7 @@ class _NewChatBottomSheetState extends State<_NewChatBottomSheet> {
                       );
                     },
                   );
-                } else if (state is MessageLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (state is MessageError) {
+                } else if (state is NewChatError) {
                   return Center(
                     child: Text(
                       state.message,
@@ -397,17 +414,67 @@ class _ChatTile extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => ChatBoxPage(userName: name, userId: userId),
             ),
-          );
+          ).then((_) {
+            context.read<MessageCubit>().loadChats();
+          });
         },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundImage:
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundImage:
                     avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-                child: avatarUrl == null ? Text(name[0]) : null,
+                    child: avatarUrl == null
+                        ? Text(
+                      name[0],
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black54,
+                      ),
+                    )
+                        : null,
+                  ),
+                  if (hasUnreadMessages)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xffff410f),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: Text(
+                          "$unreadMessages",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -418,16 +485,16 @@ class _ChatTile extends StatelessWidget {
                       name,
                       style: const TextStyle(
                         color: Colors.black87,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       lastMessage,
                       style: const TextStyle(
                         color: Colors.black54,
-                        fontSize: 15,
+                        fontSize: 14,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -435,30 +502,12 @@ class _ChatTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Column(
-                children: [
-                  Text(lastSeenTime,
-                      style: const TextStyle(color: Colors.black54)),
-                  if (hasUnreadMessages) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      width: 30,
-                      height: 30,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: const Color(0xffff410f),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        "$unreadMessages",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+              Text(
+                lastSeenTime,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
