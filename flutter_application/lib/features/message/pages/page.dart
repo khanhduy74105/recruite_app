@@ -53,7 +53,7 @@ class _MessagePageState extends State<MessagePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xff171719),
+      backgroundColor: Theme.of(context).primaryColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -61,6 +61,12 @@ class _MessagePageState extends State<MessagePage> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
                 children: [
+                  IconButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.arrow_back_ios_sharp,
+                          color: Colors.white, size: 30)),
                   const Text(
                     "Messages",
                     style: TextStyle(
@@ -158,7 +164,8 @@ class _MessagePageState extends State<MessagePage> {
                       ),
                     ),
                     Expanded(
-                      child: BlocBuilder<message_cubit.MessageCubit, MessageCommonState>(
+                      child: BlocBuilder<message_cubit.MessageCubit,
+                          MessageCommonState>(
                         builder: (context, state) {
                           if (state is MessageLoading) {
                             return const Center(
@@ -166,8 +173,8 @@ class _MessagePageState extends State<MessagePage> {
                           } else if (state is message_cubit.ChatListLoaded) {
                             final filteredChats = state.chats
                                 .where((chat) => chat.name
-                                .toLowerCase()
-                                .contains(searchQuery.toLowerCase()))
+                                    .toLowerCase()
+                                    .contains(searchQuery.toLowerCase()))
                                 .toList();
                             if (filteredChats.isEmpty) {
                               return const Center(
@@ -181,14 +188,13 @@ class _MessagePageState extends State<MessagePage> {
                                   userId: chat.userId,
                                   name: chat.name,
                                   lastMessage:
-                                  chat.lastMessage ?? 'No messages',
+                                      chat.lastMessage ?? 'No messages',
                                   lastSeenTime:
-                                  _formatTime(chat.lastMessageTime),
+                                      _formatTime(chat.lastMessageTime),
                                   hasUnreadMessages: chat.hasUnreadMessages,
                                   unreadMessages: chat.unreadMessagesCount,
                                   avatarUrl: chat.avatarUrl,
-                                  onDelete: () {
-                                  },
+                                  onDelete: () {},
                                 );
                               },
                             );
@@ -297,8 +303,8 @@ class _NewChatBottomSheetState extends State<_NewChatBottomSheet> {
                 } else if (state is new_chat_cubit.ConnectedUsersLoaded) {
                   final filteredUsers = state.users
                       .where((user) => user.fullName
-                      .toLowerCase()
-                      .contains(searchQuery.toLowerCase()))
+                          .toLowerCase()
+                          .contains(searchQuery.toLowerCase()))
                       .toList();
                   if (filteredUsers.isEmpty) {
                     return const Center(
@@ -439,16 +445,16 @@ class _ChatTile extends StatelessWidget {
                   CircleAvatar(
                     radius: 30,
                     backgroundImage:
-                    avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+                        avatarUrl != null ? NetworkImage(avatarUrl!) : null,
                     child: avatarUrl == null
                         ? Text(
-                      name[0],
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black54,
-                      ),
-                    )
+                            name[0],
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black54,
+                            ),
+                          )
                         : null,
                   ),
                   if (hasUnreadMessages)

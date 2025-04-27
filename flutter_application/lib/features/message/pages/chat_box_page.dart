@@ -79,9 +79,9 @@ class _ChatBoxPageState extends State<ChatBoxPage> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircleAvatar(
+             CircleAvatar(
               radius: 18,
-              backgroundColor: Color(0xffff410f),
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(width: 8),
             Column(
@@ -186,8 +186,8 @@ class _ChatBoxPageState extends State<ChatBoxPage> {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.add_photo_alternate,
-                      color: Color(0xffff410f)),
+                  icon:  Icon(Icons.add_photo_alternate,
+                      color:  Theme.of(context).colorScheme.primary),
                   onPressed: () {},
                 ),
               ),
@@ -218,7 +218,7 @@ class _ChatBoxPageState extends State<ChatBoxPage> {
               ),
               const SizedBox(width: 8),
               Material(
-                color: const Color(0xffff410f),
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(30),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(30),
@@ -264,7 +264,7 @@ class _ChattingTile extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              color: isByMe ? const Color(0xffff410f) : const Color(0xfff2f2f2),
+              color: isByMe ? Theme.of(context).colorScheme.primary : const Color(0xfff2f2f2),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(20),
                 topRight: const Radius.circular(20),
