@@ -8,8 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/education_model.dart';
-import '../../../models/user_models.dart';
 import '../../../models/user_connection.dart';
+import '../../../models/user_models.dart';
+import '../../message/pages/chat_box_page.dart';
 import '../../setting/cubit/setting_cubit.dart';
 import '../../setting/page/account_setting_page.dart';
 import '../cubit/profile_cubit.dart';
@@ -25,7 +26,8 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentUserId = Supabase.instance.client.auth.currentUser?.id;
     return BlocProvider(
-      create: (context) => ProfileCubit()..fetchProfile(userId, viewerId: currentUserId),
+      create: (context) =>
+          ProfileCubit()..fetchProfile(userId, viewerId: currentUserId),
       child: Scaffold(
         body: BlocConsumer<ProfileCubit, ProfileState>(
           listener: (context, state) {
@@ -74,7 +76,8 @@ class ProfileContent extends StatefulWidget {
   _ProfileContentState createState() => _ProfileContentState();
 }
 
-class _ProfileContentState extends State<ProfileContent> with SingleTickerProviderStateMixin {
+class _ProfileContentState extends State<ProfileContent>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late TimelineConfig<EducationModel> educationConfig;
   late TimelineConfig<ExperienceModel> experienceConfig;
@@ -174,8 +177,17 @@ class _ProfileContentState extends State<ProfileContent> with SingleTickerProvid
   }
 
   void _startChat(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Chat functionality not implemented yet')),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: context.read<ProfileCubit>(),
+          child: ChatBoxPage(
+            userId: widget.userId,
+            userName: widget.user.fullName,
+          ),
+        ),
+      ),
     );
   }
 
@@ -239,38 +251,52 @@ class _ProfileContentState extends State<ProfileContent> with SingleTickerProvid
                         children: [
                           Text(
                             widget.user.fullName,
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold),
                           ),
                           if (widget.user.headline != null)
-                            Text(widget.user.headline!, style: const TextStyle(fontSize: 16)),
+                            Text(widget.user.headline!,
+                                style: const TextStyle(fontSize: 16)),
                           if (widget.user.location != null)
-                            Text(widget.user.location!, style: const TextStyle(fontSize: 14)),
+                            Text(widget.user.location!,
+                                style: const TextStyle(fontSize: 14)),
                           if (!widget.isOwnProfile) ...[
                             const SizedBox(height: 8),
                             Row(
                               children: [
                                 ElevatedButton.icon(
                                   onPressed: () {
-                                    if (widget.connectionStatus == ConnectionStatus.accepted) {
-                                      context.read<ProfileCubit>().deleteConnection(widget.userId, widget.userId);
+                                    if (widget.connectionStatus ==
+                                        ConnectionStatus.accepted) {
+                                      context
+                                          .read<ProfileCubit>()
+                                          .deleteConnection(
+                                              widget.userId, widget.userId);
                                     } else {
-                                      context.read<ProfileCubit>().createConnection(widget.userId, widget.userId);
+                                      context
+                                          .read<ProfileCubit>()
+                                          .createConnection(
+                                              widget.userId, widget.userId);
                                     }
                                   },
                                   icon: Icon(
-                                    widget.connectionStatus == ConnectionStatus.accepted
+                                    widget.connectionStatus ==
+                                            ConnectionStatus.accepted
                                         ? Icons.remove_circle
                                         : Icons.add_circle,
                                   ),
                                   label: Text(
-                                    widget.connectionStatus == ConnectionStatus.accepted
+                                    widget.connectionStatus ==
+                                            ConnectionStatus.accepted
                                         ? 'Disconnect'
-                                        : widget.connectionStatus == ConnectionStatus.pending
-                                        ? 'Pending'
-                                        : 'Connect',
+                                        : widget.connectionStatus ==
+                                                ConnectionStatus.pending
+                                            ? 'Pending'
+                                            : 'Connect',
                                   ),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: widget.connectionStatus == ConnectionStatus.pending
+                                    backgroundColor: widget.connectionStatus ==
+                                            ConnectionStatus.pending
                                         ? Colors.grey
                                         : null,
                                   ),
@@ -320,7 +346,8 @@ class _ProfileContentState extends State<ProfileContent> with SingleTickerProvid
               children: [
                 if (widget.user.bio != null) ...[
                   const Text('About',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text(widget.user.bio!),
                   const SizedBox(height: 16),
@@ -363,7 +390,9 @@ class _ProfileContentState extends State<ProfileContent> with SingleTickerProvid
                 userId: widget.userId,
               ),
               SkillsGrid(userId: widget.userId),
-              ResumeTab(userId: widget.userId,),
+              ResumeTab(
+                userId: widget.userId,
+              ),
             ],
           ),
         ),

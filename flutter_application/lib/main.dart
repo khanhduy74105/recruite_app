@@ -11,6 +11,7 @@ import 'package:flutter_application/features/network/cubit/network_cubit.dart';
 import 'package:flutter_application/features/post/cubit/post_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'features/message/cubit/chat_box_cubit.dart';
 import 'features/message/cubit/message_cubit.dart';
 import 'features/profile/cubit/profile_cubit.dart';
 import 'features/setting/cubit/setting_cubit.dart';
@@ -26,9 +27,8 @@ Future<void> main() async {
         BlocProvider(create: (_) => HomeCubit()..getPosts()),
         BlocProvider(create: (_) => SettingsCubit()),
         BlocProvider(create: (_) => ProfileCubit()),
-        BlocProvider(
-          create: (context) => MessageCubit(),
-        ),
+        BlocProvider(create: (_) => MessageCubit()..loadChats()),
+        BlocProvider(create: (_) => ChatBoxCubit()),
       ],
       child: const MyApp(),
     ),
