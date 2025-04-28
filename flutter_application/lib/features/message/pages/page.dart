@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/features/message/cubit/new_chat_common_state.dart';
+import 'package:flutter_application/features/message/pages/chat_with_ai_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -212,6 +213,18 @@ class _MessagePageState extends State<MessagePage> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ChatWithAIPage(),
+            ),
+          );
+        },
+        backgroundColor: Colors.blue,
+        child: const Icon(Icons.chat, color: Colors.white),
       ),
     );
   }

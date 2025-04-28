@@ -33,6 +33,13 @@ class EnhancedRankingAgent:
         return cls._instance
     
     def generate_content(self, job_description, resume, current_info, weights):
+        weights = {
+            'tfidf_score': 0.1,
+            'semantic_score': 0.2,
+            'skill_match': 0.45,
+            'experience_match': 0.15,
+            'education_match': 0.1
+        }
         messages = deepcopy(f"""
                 'job_description': {job_description},
                 'resume': {resume},

@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from gen import GenAgent
 from matching import enhanced_ranking
 from enhance_resume_agent import EnhancedRankingAgent
+from bot_chat_agent import BotChatAgent
 load_dotenv()
 
 UPLOAD_FOLDER = 'uploads'
@@ -101,6 +102,22 @@ def enhance_resume():
         return jsonify({"message": "Resume enhanced", "text": enhanced_text}), 200
 
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route('/bot_chat', methods=['post'])
+def bot_chat():
+    try:
+        data = request.get_json()
+        if not data or 'message' not in data:
+            return jsonify({"error": "Invalid input"}), 400
+        
+        message = data['message']
+        response = BotChatAgent().generate_content(message)
+        
+        return jsonify({"message": "Chat response generated", "response": response}), 200
+
+    except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
