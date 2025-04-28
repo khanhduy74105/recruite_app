@@ -1,13 +1,16 @@
 part of 'message_cubit.dart';
 
 @immutable
-sealed class MessageState {}
+sealed class MessageState extends MessageCommonState {}
 
-final class MessageInitial extends MessageState {}
+final class ChatListLoaded extends MessageState {
+  final List<ConversationModel> chats;
 
-final class ChatBoxOpened extends MessageState {
-  final String userName;
-  final List<MessageModel> messages;
+  ChatListLoaded({required this.chats});
+}
 
-  ChatBoxOpened({required this.userName, required this.messages});
+final class ConnectedUsersLoaded extends MessageState {
+  final List<UserModel> users;
+
+  ConnectedUsersLoaded({required this.users});
 }
