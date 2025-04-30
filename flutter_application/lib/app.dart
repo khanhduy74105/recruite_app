@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/core/services/supabase_service.dart';
 import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
+import 'package:flutter_application/features/auth/pages/login_page.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
 import 'package:flutter_application/features/message/pages/page.dart';
 import 'package:flutter_application/features/network/pages/network_page.dart';
@@ -132,6 +133,11 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
             onTap: () {
               context.read<AuthCubit>().logout();
               Navigator.pop(context);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()), // Replace with your auth screen
+                    (route) => false,
+              );
             },
           ),
         ],
