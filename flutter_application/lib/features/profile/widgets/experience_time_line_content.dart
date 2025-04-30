@@ -89,49 +89,77 @@ class ExperienceTile extends StatelessWidget {
     );
   }
 }
+class ExperienceFormWidget extends StatefulWidget {
+  final ExperienceModel? experience;
+  final Function(ExperienceModel) onSave;
 
-Widget buildExperienceForm(
-    ExperienceModel? experience, Function(ExperienceModel) onSave) {
-  final controllers = {
-    'company': TextEditingController(text: experience?.company ?? ''),
-    'position': TextEditingController(text: experience?.position ?? ''),
-    'description': TextEditingController(text: experience?.description ?? ''),
-  };
+  const ExperienceFormWidget({
+    super.key,
+    this.experience,
+    required this.onSave,
+  });
 
-  return TimelineForm<ExperienceModel>(
-    item: experience,
-    onSave: onSave,
-    controllers: controllers,
-    typeName: 'Experience',
-    fieldBuilder: (item, controllers) => [
-      FormFieldWidgets.buildTextField(
-        controller: controllers['company']!,
-        label: 'Company',
-        validator: (value) => value!.isEmpty ? 'Please enter a company' : null,
+  @override
+  _ExperienceFormWidgetState createState() => _ExperienceFormWidgetState();
+}
+
+class _ExperienceFormWidgetState extends State<ExperienceFormWidget> {
+  late final Map<String, TextEditingController> controllers;
+
+  @override
+  void initState() {
+    super.initState();
+    controllers = {
+      'company': TextEditingController(text: widget.experience?.company ?? ''),
+      'position': TextEditingController(text: widget.experience?.position ?? ''),
+      'description':
+      TextEditingController(text: widget.experience?.description ?? ''),
+    };
+  }
+
+  @override
+  void dispose() {
+    controllers.forEach((_, controller) => controller.dispose());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TimelineForm<ExperienceModel>(
+      item: widget.experience,
+      onSave: widget.onSave,
+      controllers: controllers,
+      typeName: 'Experience',
+      fieldBuilder: (item, controllers) => [
+        FormFieldWidgets.buildTextField(
+          controller: controllers['company']!,
+          label: 'Company',
+          validator: (value) => value!.isEmpty ? 'Please enter a company' : null,
+        ),
+        const SizedBox(height: 16),
+        FormFieldWidgets.buildTextField(
+          controller: controllers['position']!,
+          label: 'Position',
+          validator: (value) => value!.isEmpty ? 'Please enter a position' : null,
+        ),
+        const SizedBox(height: 16),
+        FormFieldWidgets.buildTextField(
+          controller: controllers['description']!,
+          label: 'Description',
+          maxLines: 3,
+          validator: (value) =>
+          value!.isEmpty ? 'Please enter a description' : null,
+        ),
+      ],
+      itemFactory: (values, startDate, endDate) => ExperienceModel(
+        id: widget.experience?.id ?? const Uuid().v4(),
+        userId: Supabase.instance.client.auth.currentUser!.id,
+        company: values['company']!,
+        position: values['position']!,
+        description: values['description']!,
+        startDate: startDate,
+        endDate: endDate,
       ),
-      const SizedBox(height: 16),
-      FormFieldWidgets.buildTextField(
-        controller: controllers['position']!,
-        label: 'Position',
-        validator: (value) => value!.isEmpty ? 'Please enter a position' : null,
-      ),
-      const SizedBox(height: 16),
-      FormFieldWidgets.buildTextField(
-        controller: controllers['description']!,
-        label: 'Description',
-        maxLines: 3,
-        validator: (value) =>
-            value!.isEmpty ? 'Please enter a description' : null,
-      ),
-    ],
-    itemFactory: (values, startDate, endDate) => ExperienceModel(
-      id: experience?.id ?? const Uuid().v4(),
-      userId: Supabase.instance.client.auth.currentUser!.id,
-      company: values['company']!,
-      position: values['position']!,
-      description: values['description']!,
-      startDate: startDate,
-      endDate: endDate,
-    ),
-  );
+    );
+  }
 }
