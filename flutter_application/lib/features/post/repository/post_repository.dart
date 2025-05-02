@@ -58,13 +58,8 @@ class PostRepository {
         post.imageLinks = newImageLinks ?? post.imageLinks;
       }
 
-      if (newJob != null) {
+      if (newJob != null && post.job == null) {
         post.job = await JobRepository().createJob(newJob);
-      } else {
-        if (post.job != null) {
-          JobRepository().deleteJob(post.job?.id ?? '');
-        }
-        post.job = null;
       }
       await supabase.from('post').update({
         'content': post.content,
@@ -110,6 +105,31 @@ class PostRepository {
           .map((post) => PostModel.fromJson(post))
           .toList();
       return posts;
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<PostModel> fetchPostById(String postId) async {
+    try {
+      final response = await supabase
+          .from('post')
+          .select('''
+            *,
+            creator: user!post_creator_id_fkey (
+              *
+            ),
+            job: job!post_job_fkey ( 
+              *,
+              user: creator(
+                *
+              )
+            )
+          ''')
+          .eq('id', postId)
+          .single();
+
+      return PostModel.fromJson(response);
     } catch (e) {
       throw e.toString();
     }
