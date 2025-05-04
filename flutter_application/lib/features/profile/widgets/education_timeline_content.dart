@@ -57,7 +57,7 @@ class EducationTile extends StatelessWidget {
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        width: double.infinity, // Ensure card content fills available width
+        width: double.infinity,
         padding: config.cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,47 +92,76 @@ class EducationTile extends StatelessWidget {
   }
 }
 
-Widget buildEducationForm(
-    EducationModel? education, Function(EducationModel) onSave) {
-  final controllers = {
-    'school': TextEditingController(text: education?.school ?? ''),
-    'degree': TextEditingController(text: education?.degree ?? ''),
-    'fieldOfStudy': TextEditingController(text: education?.fieldOfStudy ?? ''),
-  };
+class EducationFormWidget extends StatefulWidget {
+  final EducationModel? education;
+  final Function(EducationModel) onSave;
 
-  return TimelineForm<EducationModel>(
-    item: education,
-    onSave: onSave,
-    controllers: controllers,
-    typeName: 'Education',
-    fieldBuilder: (item, controllers) => [
-      FormFieldWidgets.buildTextField(
-        controller: controllers['school']!,
-        label: 'School',
-        validator: (value) => value!.isEmpty ? 'Please enter a school' : null,
+  const EducationFormWidget({
+    super.key,
+    this.education,
+    required this.onSave,
+  });
+
+  @override
+  _EducationFormWidgetState createState() => _EducationFormWidgetState();
+}
+
+class _EducationFormWidgetState extends State<EducationFormWidget> {
+  late final Map<String, TextEditingController> controllers;
+
+  @override
+  void initState() {
+    super.initState();
+    controllers = {
+      'school': TextEditingController(text: widget.education?.school ?? ''),
+      'degree': TextEditingController(text: widget.education?.degree ?? ''),
+      'fieldOfStudy':
+      TextEditingController(text: widget.education?.fieldOfStudy ?? ''),
+    };
+  }
+
+  @override
+  void dispose() {
+    controllers.forEach((_, controller) => controller.dispose());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TimelineForm<EducationModel>(
+      item: widget.education,
+      onSave: widget.onSave,
+      controllers: controllers,
+      typeName: 'Education',
+      fieldBuilder: (item, controllers) => [
+        FormFieldWidgets.buildTextField(
+          controller: controllers['school']!,
+          label: 'School',
+          validator: (value) => value!.isEmpty ? 'Please enter a school' : null,
+        ),
+        const SizedBox(height: 16),
+        FormFieldWidgets.buildTextField(
+          controller: controllers['degree']!,
+          label: 'Degree',
+          validator: (value) => value!.isEmpty ? 'Please enter a degree' : null,
+        ),
+        const SizedBox(height: 16),
+        FormFieldWidgets.buildTextField(
+          controller: controllers['fieldOfStudy']!,
+          label: 'Field of Study',
+          validator: (value) =>
+          value!.isEmpty ? 'Please enter a field of study' : null,
+        ),
+      ],
+      itemFactory: (values, startDate, endDate) => EducationModel(
+        id: widget.education?.id ?? const Uuid().v4(),
+        userId: Supabase.instance.client.auth.currentUser!.id,
+        school: values['school']!,
+        degree: values['degree']!,
+        fieldOfStudy: values['fieldOfStudy']!,
+        startDate: startDate,
+        endDate: endDate,
       ),
-      const SizedBox(height: 16),
-      FormFieldWidgets.buildTextField(
-        controller: controllers['degree']!,
-        label: 'Degree',
-        validator: (value) => value!.isEmpty ? 'Please enter a degree' : null,
-      ),
-      const SizedBox(height: 16),
-      FormFieldWidgets.buildTextField(
-        controller: controllers['fieldOfStudy']!,
-        label: 'Field of Study',
-        validator: (value) =>
-            value!.isEmpty ? 'Please enter a field of study' : null,
-      ),
-    ],
-    itemFactory: (values, startDate, endDate) => EducationModel(
-      id: education?.id ?? const Uuid().v4(),
-      userId: Supabase.instance.client.auth.currentUser!.id,
-      school: values['school']!,
-      degree: values['degree']!,
-      fieldOfStudy: values['fieldOfStudy']!,
-      startDate: startDate,
-      endDate: endDate,
-    ),
-  );
+    );
+  }
 }

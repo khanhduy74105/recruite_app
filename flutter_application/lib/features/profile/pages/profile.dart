@@ -3,6 +3,7 @@ import 'package:flutter_application/features/home/widgets/post_card_widget.dart'
 import 'package:flutter_application/features/profile/widgets/resume_tab.dart';
 import 'package:flutter_application/features/profile/widgets/skill_grid.dart';
 import 'package:flutter_application/models/experience_model.dart';
+import 'package:flutter_application/models/post_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -102,8 +103,12 @@ class _ProfileContentState extends State<ProfileContent>
       descriptionTextStyle: const TextStyle(fontSize: 14),
       dateTextStyle: const TextStyle(fontSize: 12, color: Colors.grey),
       typeName: 'Education',
-      formBuilder: widget.isOwnProfile ? buildEducationForm : null,
-      // Disable editing for others
+      formBuilder: widget.isOwnProfile
+          ? (item, onSave) => EducationFormWidget(
+                education: item,
+                onSave: onSave,
+              )
+          : null,
       customCardBuilder: (education) =>
           EducationTile(education: education, config: educationConfig),
     );
@@ -123,8 +128,12 @@ class _ProfileContentState extends State<ProfileContent>
       descriptionTextStyle: const TextStyle(fontSize: 14),
       dateTextStyle: const TextStyle(fontSize: 12, color: Colors.grey),
       typeName: 'Experience',
-      formBuilder: widget.isOwnProfile ? buildExperienceForm : null,
-      // Disable editing for others
+      formBuilder: widget.isOwnProfile
+          ? (item, onSave) => ExperienceFormWidget(
+                experience: item,
+                onSave: onSave,
+              )
+          : null,
       customCardBuilder: (experience) =>
           ExperienceTile(experience: experience, config: experienceConfig),
     );
@@ -205,6 +214,29 @@ class _ProfileContentState extends State<ProfileContent>
             background: Stack(
               fit: StackFit.expand,
               children: [
+                Positioned.fill(
+                  child: ShaderMask(
+                    shaderCallback: (Rect bounds) {
+                      return LinearGradient(
+                        colors: [
+                          Colors.black.withOpacity(0.5),
+                          Colors.black.withOpacity(0.3),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ).createShader(bounds);
+                    },
+                    blendMode: BlendMode.darken,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage("assets/drawer_background.png"),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
                 Positioned(
                   bottom: 20,
                   left: 20,
@@ -252,14 +284,48 @@ class _ProfileContentState extends State<ProfileContent>
                           Text(
                             widget.user.fullName,
                             style: const TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 2.0,
+                                  color: Colors.black87,
+                                  offset: Offset(1.0, 1.0),
+                                ),
+                              ],
+                            ),
                           ),
                           if (widget.user.headline != null)
-                            Text(widget.user.headline!,
-                                style: const TextStyle(fontSize: 16)),
+                            Text(
+                              widget.user.headline!,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFFFFFFCC),
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 2.0,
+                                    color: Colors.black87,
+                                    offset: Offset(1.0, 1.0),
+                                  ),
+                                ],
+                              ),
+                            ),
                           if (widget.user.location != null)
-                            Text(widget.user.location!,
-                                style: const TextStyle(fontSize: 14)),
+                            Text(
+                              widget.user.location!,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFFFFFFCC),
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 2.0,
+                                    color: Colors.black87,
+                                    offset: Offset(1.0, 1.0),
+                                  ),
+                                ],
+                              ),
+                            ),
                           if (!widget.isOwnProfile) ...[
                             const SizedBox(height: 8),
                             Row(
@@ -270,33 +336,29 @@ class _ProfileContentState extends State<ProfileContent>
                                         ConnectionStatus.accepted) {
                                       context
                                           .read<ProfileCubit>()
-                                          .deleteConnection(
-                                              widget.userId, widget.userId);
+                                          .deleteConnection(widget.userId, widget.userId);
                                     } else {
                                       context
                                           .read<ProfileCubit>()
-                                          .createConnection(
-                                              widget.userId, widget.userId);
+                                          .createConnection(widget.userId, widget.userId);
                                     }
                                   },
                                   icon: Icon(
-                                    widget.connectionStatus ==
-                                            ConnectionStatus.accepted
+                                    widget.connectionStatus == ConnectionStatus.accepted
                                         ? Icons.remove_circle
                                         : Icons.add_circle,
                                   ),
                                   label: Text(
-                                    widget.connectionStatus ==
-                                            ConnectionStatus.accepted
+                                    widget.connectionStatus == ConnectionStatus.accepted
                                         ? 'Disconnect'
                                         : widget.connectionStatus ==
-                                                ConnectionStatus.pending
-                                            ? 'Pending'
-                                            : 'Connect',
+                                        ConnectionStatus.pending
+                                        ? 'Pending'
+                                        : 'Connect',
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: widget.connectionStatus ==
-                                            ConnectionStatus.pending
+                                        ConnectionStatus.pending
                                         ? Colors.grey
                                         : null,
                                   ),
@@ -318,25 +380,6 @@ class _ProfileContentState extends State<ProfileContent>
               ],
             ),
           ),
-          actions: [
-            if (widget.isOwnProfile)
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) {
-                      final settingsCubit =
-                          BlocProvider.of<SettingsCubit>(context);
-                      settingsCubit.loadSettings();
-                      return const AccountSettingsScreen();
-                    }),
-                  ).then((_) {
-                    context.read<ProfileCubit>().fetchProfile(widget.user.id);
-                  });
-                },
-              ),
-          ],
         ),
         SliverToBoxAdapter(
           child: Padding(
@@ -371,14 +414,7 @@ class _ProfileContentState extends State<ProfileContent>
           child: TabBarView(
             controller: _tabController,
             children: [
-              ListView.builder(
-                padding: const EdgeInsets.all(16.0),
-                itemCount: widget.user.posts.length,
-                itemBuilder: (context, index) {
-                  final post = widget.user.posts[index];
-                  return PostCardWidget(postModel: post);
-                },
-              ),
+              buildListPosts(),
               ExperienceTimelineContent(
                 experiences: timelineExperiences,
                 config: experienceConfig,
@@ -398,6 +434,20 @@ class _ProfileContentState extends State<ProfileContent>
         ),
       ],
     );
+  }
+
+  Widget buildListPosts() {
+    if (widget.user.posts.isNotEmpty) {
+      return ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: widget.user.posts.length,
+        itemBuilder: (context, index) {
+          final post = widget.user.posts[index];
+          return PostCardWidget(postModel: post);
+        },
+      );
+    } else
+      return const Center(child: Text('No posts available'));
   }
 }
 

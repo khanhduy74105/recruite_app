@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application/core/services/supabase_service.dart';
 import 'package:flutter_application/features/auth/cubit/auth_cubit.dart';
+import 'package:flutter_application/features/auth/pages/login_page.dart';
 import 'package:flutter_application/features/home/pages/home_page.dart';
+import 'package:flutter_application/features/jobs/pages/jobs_page.dart';
 import 'package:flutter_application/features/message/pages/page.dart';
 import 'package:flutter_application/features/network/pages/network_page.dart';
+import 'package:flutter_application/features/notifications/pages/notifications_page.dart';
 import 'package:flutter_application/features/post/pages/post_page.dart';
 import 'package:flutter_application/features/profile/pages/profile.dart';
-import 'package:flutter_application/features/notifications/pages/notifications_page.dart';
-import 'package:flutter_application/features/jobs/pages/jobs_page.dart';
+import 'package:flutter_application/features/setting/cubit/setting_cubit.dart';
 import 'package:flutter_application/features/setting/page/account_setting_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_application/features/setting/cubit/setting_cubit.dart';
 
 class AppBottomNavigatorBar extends StatefulWidget {
   const AppBottomNavigatorBar({super.key});
 
   static MaterialPageRoute route() => MaterialPageRoute(
-    builder: (context) => const AppBottomNavigatorBar(),
-  );
+        builder: (context) => const AppBottomNavigatorBar(),
+      );
 
   @override
   _AppBottomNavigatorBarState createState() => _AppBottomNavigatorBarState();
@@ -59,45 +60,102 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
           BlocBuilder<SettingsCubit, SettingsState>(
             builder: (context, state) {
               if (state.isLoading) {
-                return const UserAccountsDrawerHeader(
-                  accountName: Text('Loading...'),
-                  accountEmail: Text('Loading...'),
-                  currentAccountPicture: CircleAvatar(
-                    child: CircularProgressIndicator(),
+                return Container(
+                  padding: const EdgeInsets.all(16.0),
+                  height: 150,
+                  child: const Center(
+                    child: CircleAvatar(
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
                 );
               }
               if (state.error != null) {
-                return UserAccountsDrawerHeader(
-                  accountName: const Text('Error'),
-                  accountEmail: Text(state.error!),
-                  currentAccountPicture: const CircleAvatar(
-                    child: Icon(Icons.error, color: Colors.red),
+                return Container(
+                  padding: const EdgeInsets.all(16.0),
+                  height: 150,
+                  child: const Center(
+                    child: CircleAvatar(
+                      child: Icon(Icons.error, color: Colors.red),
+                    ),
                   ),
                 );
               }
 
-              return UserAccountsDrawerHeader(
-                accountName: Text(state.user.fullName),
-                accountEmail: Text(state.user.email),
-                currentAccountPicture: CircleAvatar(
-                  backgroundImage: state.user.avatarUrl != null
-                      ? NetworkImage(state.user.avatarUrl!)
-                      : const AssetImage("assets/profile.png") as ImageProvider,
-                  onBackgroundImageError: (exception, stackTrace) {
-                    // Fallback to default image if the network image fails to load
-                    setState(() {});
-                  },
-                  child: state.user.avatarUrl == null
-                      ? const Icon(Icons.person, size: 40)
-                      : null,
-                ),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.blue, Colors.blueAccent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+              return Container(
+                width: double.infinity,
+                child: Stack(
+                  children: [
+                    // Background with ShaderMask
+                    Positioned.fill(
+                      child: ShaderMask(
+                        shaderCallback: (Rect bounds) {
+                          return LinearGradient(
+                            colors: [
+                              Colors.black.withOpacity(0.5),
+                              Colors.black.withOpacity(0.3),
+                            ],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ).createShader(bounds);
+                        },
+                        blendMode: BlendMode.darken,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage("assets/drawer_background.png"),
+                              // Your image path
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Foreground content (avatar, name, email)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: state.user.avatarUrl != null
+                                ? NetworkImage(state.user.avatarUrl!)
+                                : const AssetImage("assets/profile.png")
+                                    as ImageProvider,
+                            onBackgroundImageError: (exception, stackTrace) {
+                              setState(() {});
+                            },
+                            child: state.user.avatarUrl == null
+                                ? const Icon(Icons.person, size: 40)
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                state.user.fullName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              Text(
+                                state.user.email,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
@@ -109,7 +167,10 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => ProfilePage(userId: SupabaseService.getCurrentUserId(),)),
+                MaterialPageRoute(
+                  builder: (_) =>
+                      ProfilePage(userId: SupabaseService.getCurrentUserId()),
+                ),
               );
             },
           ),
@@ -132,6 +193,11 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
             onTap: () {
               context.read<AuthCubit>().logout();
               Navigator.pop(context);
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (route) => false,
+              );
             },
           ),
         ],

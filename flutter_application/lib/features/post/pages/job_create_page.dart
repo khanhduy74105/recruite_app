@@ -21,8 +21,9 @@ class _JobCreatePageState extends State<JobCreatePage> {
   final TextEditingController isRemoteController = TextEditingController();
   final TextEditingController postedDateController = TextEditingController();
   final List<File> selectedFiles = [];
+  final _formKey = GlobalKey<FormState>();
   final JobModel jobModel = JobModel(
-    id: '', // Placeholder, should be generated or assigned later
+    id: '',
     title: '',
     creator: '',
     description: '',
@@ -76,14 +77,35 @@ class _JobCreatePageState extends State<JobCreatePage> {
     });
   }
 
+  String? _validateRequired(String? value, String fieldName) {
+    if (value == null || value.trim().isEmpty) {
+      return '$fieldName is required';
+    }
+    if (value.trim().length < 3) {
+      return '$fieldName must be at least 3 characters';
+    }
+    return null;
+  }
+
+  String? _validateDescription(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Description is required';
+    }
+    if (value.trim().length < 10) {
+      return 'Description must be at least 10 characters';
+    }
+    return null;
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String key,
     required String labelText,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
@@ -95,15 +117,16 @@ class _JobCreatePageState extends State<JobCreatePage> {
         fillColor: ThemeData().inputDecorationTheme.fillColor,
         suffixIcon: controller.text.isNotEmpty
             ? IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  setState(() {
-                    controller.clear();
-                  });
-                },
-              )
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            setState(() {
+              controller.clear();
+            });
+          },
+        )
             : null,
       ),
+      validator: validator,
       onChanged: (value) {
         switch (key) {
           case 'title':
@@ -117,8 +140,6 @@ class _JobCreatePageState extends State<JobCreatePage> {
             break;
           case 'location':
             jobModel.location = value;
-            break;
-          default:
             break;
         }
       },
@@ -162,56 +183,68 @@ class _JobCreatePageState extends State<JobCreatePage> {
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: () {
-              Navigator.pop(context, jobModel);
+              if (_formKey.currentState!.validate()) {
+                Navigator.pop(context, jobModel);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please fix the errors in the form')),
+                );
+              }
             },
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            top: 10,
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              top: 10,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTextField(
+                  controller: titleController,
+                  key: 'title',
+                  labelText: 'Job Title',
+                  validator: (value) => _validateRequired(value, 'Job Title'),
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: descriptionController,
+                  key: 'description',
+                  labelText: 'Job Description',
+                  maxLines: 4,
+                  keyboardType: TextInputType.multiline,
+                  validator: _validateDescription,
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: companyNameController,
+                  key: 'company_name',
+                  labelText: 'Company Name',
+                  validator: (value) => _validateRequired(value, 'Company Name'),
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  controller: locationController,
+                  key: 'location',
+                  labelText: 'Location',
+                ),
+                const SizedBox(height: 16),
+                if (selectedFiles.isNotEmpty) _buildSelectedFiles(),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _pickFile,
+                  icon: const Icon(Icons.attach_file),
+                  label: const Text('Attach Files'),
+                ),
+              ],
+            ),
           ),
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTextField(
-              controller: titleController,
-              key: 'title',
-              labelText: 'Job Title',
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: descriptionController,
-              key: 'description',
-              labelText: 'Job Description',
-              maxLines: 4,
-              keyboardType: TextInputType.multiline,
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: companyNameController,
-              key: 'company_name',
-              labelText: 'Company Name',
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              controller: locationController,
-              key: 'location',
-              labelText: 'Location',
-            ),
-            const SizedBox(height: 16),
-            if (selectedFiles.isNotEmpty) _buildSelectedFiles(),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _pickFile,
-              icon: const Icon(Icons.attach_file),
-              label: const Text('Attach Files'),
-            ),
-          ],
-        ),
         ),
       ),
     );
