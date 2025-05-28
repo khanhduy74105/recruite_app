@@ -37,13 +37,10 @@ class JobCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              border: Border.all(
+                color: Colors.grey[300]!,
+                width: 1,
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

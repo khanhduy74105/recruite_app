@@ -35,18 +35,23 @@ class PostCardWidget extends StatefulWidget {
 class _PostCardWidgetState extends State<PostCardWidget> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        PostUserHeader(
-          postModel: widget.postModel,
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Container(
+        color: Colors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            PostUserHeader(
+              postModel: widget.postModel,
+            ),
+            PostContent(
+              postModel: widget.postModel,
+              isExpandedComments: widget.isExpandedComments,
+            ),
+          ],
         ),
-        PostContent(
-          postModel: widget.postModel,
-          isExpandedComments: widget.isExpandedComments,
-        ),
-        if (!widget.isExpandedComments) const Divider(),
-      ],
+      ),
     );
   }
 }
@@ -91,7 +96,7 @@ class PostAction extends StatelessWidget {
             color: color,
           ),
           label: Text(
-            "Like(${postModel.likes.length})",
+            "${postModel.likes.length} Likes",
             style: TextStyle(color: color),
           ),
         ),
@@ -104,8 +109,8 @@ class PostAction extends StatelessWidget {
               context,
               MaterialPageRoute(
                   builder: (context) => PostDetailPage(
-                        postModel: postModel,
-                      )),
+                    postModel: postModel,
+                  )),
             );
           },
           icon: Icon(Icons.comment_outlined, size: 16, color: color),
@@ -186,6 +191,10 @@ class PostUserHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     UserModel user = postModel.creator!;
+    final bottomHeaderTextStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+      color: Colors.black54,
+      fontSize: 12,
+    );
     return ListTile(
       contentPadding: const EdgeInsets.only(left: 16),
       leading: UserAvatar(
@@ -201,11 +210,12 @@ class PostUserHeader extends StatelessWidget {
           child: Text(user.fullName)),
       subtitle: Row(
         children: [
-          Text(user.role != null ? user.role!.name : 'user'),
+          Text(user.role != null ? user.role!.name : 'user',style: bottomHeaderTextStyle,
+          ),
           const SizedBox(width: 5),
-          const Icon(Icons.circle, size: 5),
+          const Icon(Icons.circle, size: 5 , color: Colors.black54),
           const SizedBox(width: 5),
-          Text(timeAgo(user.createdAt!)),
+          Text(timeAgo(user.createdAt! ), style: bottomHeaderTextStyle),
         ],
       ),
       trailing: IconButton(
