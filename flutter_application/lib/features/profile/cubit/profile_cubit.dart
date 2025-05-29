@@ -107,16 +107,18 @@ class ProfileCubit extends Cubit<ProfileState> {
   Future<void> updateAvatar(String userId, ImageSource source) async {
     try {
       emit(AvatarUpdating());
+      print('Starting avatar update for user: $userId');
 
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: source);
-
+      print('Picked file: $pickedFile');
       if (pickedFile == null) {
         emit(const ProfileError('No image selected'));
         return;
       }
 
       final session = _supabase.auth.currentSession;
+      print('Session: $session');
       if (session == null) {
         emit(const ProfileError('User not authenticated'));
         return;
@@ -124,18 +126,22 @@ class ProfileCubit extends Cubit<ProfileState> {
 
       final file = File(pickedFile.path);
       final fileName = '${userId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      print('Uploading to avatars/$fileName');
       await _supabase.storage.from('avatars').upload(fileName, file);
 
-      final avatarUrl =
-          _supabase.storage.from('avatars').getPublicUrl(fileName);
+      final avatarUrl = _supabase.storage.from('avatars').getPublicUrl(fileName);
+      print('Avatar URL: $avatarUrl');
 
+      print('Updating database with URL: $avatarUrl');
       await _supabase
-          .from('user_info')
-          .update({'avatar_url': avatarUrl}).eq('user_id', userId);
+          .from('user')
+          .update({'avatar_url': avatarUrl}).eq('id', userId);
 
       emit(AvatarUpdated(avatarUrl));
+      print('Avatar updated successfully');
       await fetchProfile(userId);
     } catch (e) {
+      print('Error in updateAvatar: $e');
       emit(ProfileError('Failed to update avatar: $e'));
     }
   }
