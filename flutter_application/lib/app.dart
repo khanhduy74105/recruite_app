@@ -233,8 +233,11 @@ class _AppBottomNavigatorBarState extends State<AppBottomNavigatorBar> {
                       ),
                     );
                   },
-                  child: const Icon(
-                    Icons.message_rounded,
+                  child: Image.asset(
+                    'assets/ic_message.png',
+                    width: 24,
+                    height: 24,
+                    color: Colors.black,
                   ),
                 ),
                 const SizedBox(width: 10),

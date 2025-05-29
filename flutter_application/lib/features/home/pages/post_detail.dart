@@ -195,6 +195,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
                               controller: commentController,
                               decoration: InputDecoration(
                                 hintText: 'Leave a comment...',
+                                hintStyle: const TextStyle(
+                                  color: Colors.black45,
+                                  fontSize: 14,
+                                ),
                                 filled: true,
                                 fillColor: Colors.white,
                                 border: OutlineInputBorder(
@@ -209,30 +213,41 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                   vertical: 0.0,
                                 ),
                                 prefixIcon: mentionUser != null
-                                    ? Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            SizedBox(width: 8),
-                                            Text(
-                                              '@${mentionUser?.fullName}',
-                                              style: const TextStyle(
-                                                color: Colors.blue,
-                                                fontSize: 14,
-                                              ),
+                                    ? Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8.0),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade200,
+                                            borderRadius:
+                                                BorderRadius.circular(24.0),
+                                          ),
+                                        child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(
+                                                  '@${mentionUser?.fullName}',
+                                                  style: const TextStyle(
+                                                    color: Colors.blue,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 2),
+                                                GestureDetector(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        mentionUser = null;
+                                                      });
+                                                    },
+                                                    child: const Icon(
+                                                      Icons.close,
+                                                      size: 16,
+                                                    )),
+                                              ],
                                             ),
-                                            const SizedBox(width: 2),
-                                            GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                                    mentionUser = null;
-                                                  });
-                                                },
-                                                child: const Icon(
-                                                  Icons.close,
-                                                  size: 20,
-                                                )),
-                                          ],
-                                        )
+                                      ),
+                                    )
                                     : null,
                               ),
                             ),

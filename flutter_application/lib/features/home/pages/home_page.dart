@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF1F1F1),
       body: SingleChildScrollView(
         child: BlocBuilder<HomeCubit, HomeState>(
           builder: (context, state) {
@@ -31,6 +32,7 @@ class _HomePageState extends State<HomePage> {
             }
             if (state is HomeLoadedPost) {
               return ListView.builder(
+                padding: const EdgeInsets.all(0),
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 itemCount: state.posts.length,

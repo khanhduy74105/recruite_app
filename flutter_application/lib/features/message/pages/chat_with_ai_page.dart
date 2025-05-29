@@ -120,13 +120,23 @@ class _ChatWithAIPageState extends State<ChatWithAIPage> {
         backgroundColor: Colors.white,
         elevation: 1,
         centerTitle: true,
-        title: const Text(
-          "Chat with AI",
-          style: TextStyle(
-            color: Colors.black87,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/ic_bot.png',
+              height: 24,
+              width: 24,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              "Chat with AI",
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
