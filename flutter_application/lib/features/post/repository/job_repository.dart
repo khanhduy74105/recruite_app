@@ -11,9 +11,9 @@ class JobRepository {
       List<String> urls = jobModel.jdUrls;
       if (jobModel.files != null && jobModel.files!.isNotEmpty) {
         urls = await SupabaseService.upload(jobModel.files!, bucket: 'jd');
-        print('Uploaded files: ${jobModel.files?.length} ${jobModel.jdUrls} | $urls');
       }
-      print('files: ${jobModel.files}');
+
+      print('JOB: ${supabase.auth.currentUser?.id}');
 
       final respones = await supabase.from('job').insert({
         'title': jobModel.title,
