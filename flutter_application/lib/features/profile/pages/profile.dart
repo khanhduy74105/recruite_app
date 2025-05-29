@@ -3,7 +3,6 @@ import 'package:flutter_application/features/home/widgets/post_card_widget.dart'
 import 'package:flutter_application/features/profile/widgets/resume_tab.dart';
 import 'package:flutter_application/features/profile/widgets/skill_grid.dart';
 import 'package:flutter_application/models/experience_model.dart';
-import 'package:flutter_application/models/post_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -12,8 +11,6 @@ import '../../../models/education_model.dart';
 import '../../../models/user_connection.dart';
 import '../../../models/user_models.dart';
 import '../../message/pages/chat_box_page.dart';
-import '../../setting/cubit/setting_cubit.dart';
-import '../../setting/page/account_setting_page.dart';
 import '../cubit/profile_cubit.dart';
 import '../widgets/education_timeline_content.dart';
 import '../widgets/experience_time_line_content.dart';
@@ -336,29 +333,33 @@ class _ProfileContentState extends State<ProfileContent>
                                         ConnectionStatus.accepted) {
                                       context
                                           .read<ProfileCubit>()
-                                          .deleteConnection(widget.userId, widget.userId);
+                                          .deleteConnection(
+                                              widget.userId, widget.userId);
                                     } else {
                                       context
                                           .read<ProfileCubit>()
-                                          .createConnection(widget.userId, widget.userId);
+                                          .createConnection(
+                                              widget.userId, widget.userId);
                                     }
                                   },
                                   icon: Icon(
-                                    widget.connectionStatus == ConnectionStatus.accepted
+                                    widget.connectionStatus ==
+                                            ConnectionStatus.accepted
                                         ? Icons.remove_circle
                                         : Icons.add_circle,
                                   ),
                                   label: Text(
-                                    widget.connectionStatus == ConnectionStatus.accepted
+                                    widget.connectionStatus ==
+                                            ConnectionStatus.accepted
                                         ? 'Disconnect'
                                         : widget.connectionStatus ==
-                                        ConnectionStatus.pending
-                                        ? 'Pending'
-                                        : 'Connect',
+                                                ConnectionStatus.pending
+                                            ? 'Pending'
+                                            : 'Connect',
                                   ),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: widget.connectionStatus ==
-                                        ConnectionStatus.pending
+                                            ConnectionStatus.pending
                                         ? Colors.grey
                                         : null,
                                   ),
@@ -366,7 +367,12 @@ class _ProfileContentState extends State<ProfileContent>
                                 const SizedBox(width: 8),
                                 ElevatedButton.icon(
                                   onPressed: () => _startChat(context),
-                                  icon: const Icon(Icons.message),
+                                  icon: Image.asset(
+                                    'assets/ic_message.png',
+                                    width: 20,
+                                    height: 20,
+                                    color: Colors.white,
+                                  ),
                                   label: const Text('Message'),
                                 ),
                               ],
@@ -438,13 +444,18 @@ class _ProfileContentState extends State<ProfileContent>
 
   Widget buildListPosts() {
     if (widget.user.posts.isNotEmpty) {
-      return ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemCount: widget.user.posts.length,
-        itemBuilder: (context, index) {
-          final post = widget.user.posts[index];
-          return PostCardWidget(postModel: post);
-        },
+      return Container(
+        decoration: const BoxDecoration(
+          color: Colors.black12,
+        ),
+        child: ListView.builder(
+          padding: const EdgeInsets.all(0),
+          itemCount: widget.user.posts.length,
+          itemBuilder: (context, index) {
+            final post = widget.user.posts[index];
+            return PostCardWidget(postModel: post);
+          },
+        ),
       );
     } else
       return const Center(child: Text('No posts available'));

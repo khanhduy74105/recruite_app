@@ -20,12 +20,16 @@ class MyNetworkPage extends StatelessWidget {
           body: Column(
             children: [
               const InvitationsSection(),
-              const Divider(thickness: 6, color: Colors.grey),
               ListTile(
-                leading: const Icon(Icons.group),
+                leading: Image.asset(
+                  'assets/ic_group.png',
+                  width: 20,
+                  height: 20,
+                  color: Colors.black,
+                ),
                 title: Text(
                     "My Connections${state is NetworkLoaded ? " (${state.connections.length})" : ""}"),
-                trailing: Icon(Icons.keyboard_arrow_right),
+                trailing: const Icon(Icons.keyboard_arrow_right),
                 onTap: () {
                   Navigator.push(
                     context,
@@ -35,10 +39,14 @@ class MyNetworkPage extends StatelessWidget {
                   );
                 },
               ),
-              const Divider(thickness: 6, color: Colors.grey),
-              const ListTile(
-                leading: Icon(Icons.people),
-                title: Text("People you may know"),
+              ListTile(
+                leading: Image.asset(
+                  'assets/ic_group.png',
+                  width: 20,
+                  height: 20,
+                  color: Colors.black,
+                ),
+                title: const Text("People you may know"),
               ),
               const Expanded(child: PeopleYouMayKnowSection()),
             ],
@@ -93,9 +101,14 @@ class InvitationsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const ListTile(
-          leading: Icon(Icons.person_add),
-          title: Text("Invitations"),
+        ListTile(
+          leading: Image.asset(
+            'assets/ic_add_friend.png',
+            width: 20,
+            height: 20,
+            color: Colors.black,
+          ),
+          title: const Text("Invitations"),
         ),
         StreamBuilder(
           stream: Supabase.instance.client
@@ -296,14 +309,10 @@ class PeopleTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -344,7 +353,6 @@ class PeopleTile extends StatelessWidget {
   }
 
   void goProfile(BuildContext context) {
-
     Navigator.push(
       context,
       MaterialPageRoute(
